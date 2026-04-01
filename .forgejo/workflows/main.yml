@@ -1,0 +1,33 @@
+name: OS Build Dispatcher
+on: [push]
+
+jobs:
+  check_paths:
+    runs-on: codeberg-small
+    outputs:
+      arch_changed: ${{ steps.filter.outputs.arch }}
+      fedora_changed: ${{ steps.filter.outputs.fedora }}
+      void_changed: ${{ steps.filter.outputs.void }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: https://github.com/dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            arch: ['arch/**']
+            fedora: ['fedora/**']
+            void: ['void/**']
+
+  build-arch:
+    needs: check_paths
+    if: needs.check_paths.outputs.arch_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Running Arch tasks..."
+
+  build-fedora:
+    needs: check_paths
+    if: needs.check_paths.outputs.fedora_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Running Fedora tasks..."
