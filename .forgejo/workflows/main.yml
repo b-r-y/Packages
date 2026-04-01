@@ -18,16 +18,22 @@ jobs:
             fedora: ['fedora/**']
             void: ['void/**']
 
-  build-arch:
+  check-arch:
     needs: check_paths
     if: needs.check_paths.outputs.arch_changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: codeberg-small
     steps:
       - run: echo "Running Arch tasks..."
 
-  build-fedora:
+  check-fedora:
     needs: check_paths
     if: needs.check_paths.outputs.fedora_changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: codeberg-small
     steps:
       - run: echo "Running Fedora tasks..."
+  check-void:
+    needs: check_paths
+    if: needs.check_paths.outputs.void_changed == 'true'
+    runs-on: codeberg-small
+    steps:
+      - run: echo "Running Void tasks..."
