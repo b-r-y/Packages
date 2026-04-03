@@ -18,180 +18,41 @@ jobs:
             fedora: ['fedora/**']
             void: ['void/**']
 
-  build-arch:
+  trigger-arch-build:
     needs: check_paths
     if: needs.check_paths.outputs.arch_changed == 'true'
     runs-on: codeberg-small
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Build Arch packages
+      - name: Trigger GitHub workflow for Arch
         run: |
-          cd arch
-          for pkgdir in */; do
-            if [ -f "$pkgdir/PKGBUILD" ]; then
-              echo "Building package in $pkgdir"
-              docker run --rm -v "$PWD/$pkgdir:/pkg" archlinux:latest bash -c "
-                cd /pkg && \
-                pacman -Syu --noconfirm base-devel && \
-                useradd -m builder && \
-                chown -R builder:builder /pkg && \
-                su builder -c 'makepkg -sf --noconfirm'
-              "
-            fi
-          done
-      
-      - name: Clone repo repository
-        run: |
-          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
-      
-      - name: Check versions and copy new packages
-        run: |
-          cd arch
-          for pkg in */*.pkg.tar.zst; do
-            if [ -f "$pkg" ]; then
-              pkgname=$(basename "$pkg")
-              pkgbase=$(echo "$pkgname" | sed 's/-[0-9].*//')
-              
-              # Check if package exists in repo
-              if [ -f "/tmp/repo/arch/$pkgname" ]; then
-                echo "Package $pkgname already exists with same version, skipping"
-              else
-                echo "New version of $pkgname, copying to repo"
-                mkdir -p /tmp/repo/arch
-                cp "$pkg" /tmp/repo/arch/
-              fi
-            fi
-          done
-      
-      - name: Push to repo
-        run: |
-          cd /tmp/repo
-          git config user.name "Forgejo CI"
-          git config user.email "ci@forgejo.local"
-          git add arch/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update Arch packages"
-            git push https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git main
-          fi
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
+            -d '{"event_type":"build-arch"}'
 
-  build-fedora:
+  trigger-fedora-build:
     needs: check_paths
     if: needs.check_paths.outputs.fedora_changed == 'true'
     runs-on: codeberg-small
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Build Fedora packages
+      - name: Trigger GitHub workflow for Fedora
         run: |
-          cd fedora
-          for specdir in */; do
-            if [ -f "$specdir"/*.spec ]; then
-              echo "Building package in $specdir"
-              docker run --rm -v "$PWD/$specdir:/pkg" fedora:latest bash -c "
-                cd /pkg && \
-                dnf install -y rpm-build rpmdevtools dnf-plugins-core && \
-                rpmdev-setuptree && \
-                cp *.spec ~/rpmbuild/SPECS/ && \
-                [ -d sources ] && cp sources/* ~/rpmbuild/SOURCES/ || true && \
-                cd ~/rpmbuild/SPECS && \
-                dnf builddep -y *.spec && \
-                rpmbuild -ba *.spec && \
-                cp ~/rpmbuild/RPMS/*/*.rpm /pkg/ && \
-                cp ~/rpmbuild/SRPMS/*.rpm /pkg/
-              "
-            fi
-          done
-      
-      - name: Clone repo repository
-        run: |
-          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
-      
-      - name: Check versions and copy new packages
-        run: |
-          cd fedora
-          for pkg in */*.rpm; do
-            if [ -f "$pkg" ]; then
-              pkgname=$(basename "$pkg")
-              
-              if [ -f "/tmp/repo/fedora/$pkgname" ]; then
-                echo "Package $pkgname already exists with same version, skipping"
-              else
-                echo "New version of $pkgname, copying to repo"
-                mkdir -p /tmp/repo/fedora
-                cp "$pkg" /tmp/repo/fedora/
-              fi
-            fi
-          done
-      
-      - name: Push to repo
-        run: |
-          cd /tmp/repo
-          git config user.name "Forgejo CI"
-          git config user.email "ci@forgejo.local"
-          git add fedora/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update Fedora packages"
-            git push https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git main
-          fi
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
+            -d '{"event_type":"build-fedora"}'
 
-  build-void:
+  trigger-void-build:
     needs: check_paths
     if: needs.check_paths.outputs.void_changed == 'true'
     runs-on: codeberg-small
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Build Void packages
+      - name: Trigger GitHub workflow for Void
         run: |
-          cd void
-          for templatedir in */; do
-            if [ -f "$templatedir/template" ]; then
-              echo "Building package in $templatedir"
-              docker run --rm -v "$PWD/$templatedir:/pkg" voidlinux/voidlinux:latest bash -c "
-                xbps-install -Syu xbps && \
-                xbps-install -y base-devel && \
-                cd /pkg && \
-                xbps-src binary-bootstrap && \
-                xbps-src pkg \$(basename /pkg)
-              "
-            fi
-          done
-      
-      - name: Clone repo repository
-        run: |
-          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
-      
-      - name: Check versions and copy new packages
-        run: |
-          cd void
-          for pkg in */*.xbps; do
-            if [ -f "$pkg" ]; then
-              pkgname=$(basename "$pkg")
-              
-              if [ -f "/tmp/repo/void/$pkgname" ]; then
-                echo "Package $pkgname already exists with same version, skipping"
-              else
-                echo "New version of $pkgname, copying to repo"
-                mkdir -p /tmp/repo/void
-                cp "$pkg" /tmp/repo/void/
-              fi
-            fi
-          done
-      
-      - name: Push to repo
-        run: |
-          cd /tmp/repo
-          git config user.name "Forgejo CI"
-          git config user.email "ci@forgejo.local"
-          git add void/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update Void packages"
-            git push https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git main
-          fi
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
+            -d '{"event_type":"build-void"}'
