@@ -2,57 +2,13 @@ name: OS Build Dispatcher
 on: [push]
 
 jobs:
-  check_paths:
-    runs-on: codeberg-small
-    outputs:
-      arch_changed: ${{ steps.filter.outputs.arch }}
-      fedora_changed: ${{ steps.filter.outputs.fedora }}
-      void_changed: ${{ steps.filter.outputs.void }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: https://github.com/dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            arch: ['arch/**']
-            fedora: ['fedora/**']
-            void: ['void/**']
-
-  trigger-arch-build:
-    needs: check_paths
-    if: needs.check_paths.outputs.arch_changed == 'true'
+  trigger-build:
     runs-on: codeberg-small
     steps:
-      - name: Trigger GitHub workflow for Arch
+      - name: Trigger GitHub workflow for all packages
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
             -d '{"event_type":"build-arch"}'
-
-  trigger-fedora-build:
-    needs: check_paths
-    if: needs.check_paths.outputs.fedora_changed == 'true'
-    runs-on: codeberg-small
-    steps:
-      - name: Trigger GitHub workflow for Fedora
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
-            -d '{"event_type":"build-fedora"}'
-
-  trigger-void-build:
-    needs: check_paths
-    if: needs.check_paths.outputs.void_changed == 'true'
-    runs-on: codeberg-small
-    steps:
-      - name: Trigger GitHub workflow for Void
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
-            -d '{"event_type":"build-void"}'
