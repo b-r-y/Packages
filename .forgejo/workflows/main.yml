@@ -9,6 +9,6 @@ jobs:
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.GITHUBTOKEN }}" \
             https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
             -d '{"event_type":"build-arch"}'
