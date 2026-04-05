@@ -5,7 +5,7 @@ Summary:        A DDRaceNetwork modification adding new features
 License:        Unknown
 URL:            https://cactuss.top/
 Source0:        https://dw.cactuss.top/%{version}/Cactus-%{version}-public-linux_x86_64.tar.xz
-Source1:        https://rxelelo.gitlab.io/rxrepo/rxrepo/os/x86_64/cactus-client.png
+Source1:        https://rxelelo.gitlab.io/rxrepo/icons/%{name}.png
 ExclusiveArch:  x86_64
 
 # Runtime dependencies

@@ -5,7 +5,7 @@ Summary:        Launcher for most popular Teeworlds clients.
 License:        Unknown
 URL:            https://twlauncher.netlify.app/
 Source0:        https://github.com/noxygalaxy/TWLauncher/releases/download/v%{version}/TWLauncher-x86_64.AppImage
-Source1:        https://rxelelo.gitlab.io/rxrepo/rxrepo/os/x86_64/twlauncher.png
+Source1:        https://rxelelo.gitlab.io/rxrepo/icons/%{name}.png
 ExclusiveArch:  x86_64
 
 # Runtime dependencies
