@@ -1,0 +1,4 @@
+CatClient-*
+src/
+pkg/
+*.pkg.tar.zst
