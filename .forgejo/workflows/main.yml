@@ -11,4 +11,4 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.GITHUBTOKEN }}" \
             https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
-            -d '{"event_type":"build-arch"}'
+            -d '{"event_type":"build-arch","client_payload":{"commit_message":"${{ forgejo.event.head_commit.message }}","commit_sha":"${{ forgejo.sha }}"}}'
