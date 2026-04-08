@@ -1,0 +1,20 @@
+# Template file for 'adw-gtk-theme'
+pkgname=distrobox
+version=1.8.2.4
+revision=0
+short_desc="Use any linux distribution inside your terminal."
+maintainer="Rain Xelelo <rXelelo@outlook.com"
+license="GPL-3.0-only"
+homepage="https://distrobox.it"
+distfiles="https://github.com/89luca89/distrobox/archive/${version}.tar.gz"
+checksum=83eab6ba893dce56f0523a70ebfcf2a78f7785637a6895255777ef1b72d4eb89
+
+depends="
+bash
+hicolor-icon-theme
+"
+
+do_install() {
+ vmkdir usr/
+ ./install -P $DESTDIR/usr/
+}
