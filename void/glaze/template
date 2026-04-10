@@ -1,6 +1,6 @@
 # Template file for 'glaze'
 pkgname=glaze
-version=5.0.0
+version=7.3.2
 revision=1
 build_style=cmake
 configure_args=" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23"
@@ -11,7 +11,7 @@ maintainer="hesam-init <hesam.init@gmail.com>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/stephenberry/glaze"
 distfiles="https://github.com/stephenberry/glaze/archive/refs/tags/v${version}.tar.gz"
-checksum="37e4ab809f18c5497a35481f347c1ed63761324644e358d92a7a11fe647fd44a"
+checksum=4c8ee3039768eb67cee5335e052deafee4791bab87e3d4a965cce90e5c5c9f55
 
 build_options="clang gcc"
 build_options_default="gcc"

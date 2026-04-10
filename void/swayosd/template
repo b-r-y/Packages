@@ -1,6 +1,6 @@
 # Template file for 'swayosd'
 pkgname=swayosd
-version=0.1.0
+version=0.3.1
 revision=1
 build_style=meson
 configure_args="--buildtype=release"
@@ -13,7 +13,7 @@ license="GPL-3.0-only"
 homepage="https://github.com/ErikReider/SwayOSD"
 changelog="https://github.com/ErikReider/SwayOSD/releases"
 distfiles="https://github.com/ErikReider/SwayOSD/archive/refs/tags/v${version}.tar.gz"
-checksum="5a07607643dc49d19604842f2c2f777f6148981147c425c281b0634254438a0b"
+checksum=c8ba093637d21c25db7bccdb0009362aa712b173a1c403e87ab678a84dae9b32
 
 post_install() {
    vsv swayosd-libinput-backend
