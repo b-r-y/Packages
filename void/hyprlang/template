@@ -50,6 +50,9 @@ pre_configure() {
 
       configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libc++"
    fi
+   # Add fmt dependency for GCC (no std::println in GCC's C++23)
+    sed -i '/find_package(PkgConfig REQUIRED)/a find_package(fmt REQUIRED)' CMakeLists.txt
+    sed -i 's/target_link_libraries(hyprlang PkgConfig::deps)/target_link_libraries(hyprlang PkgConfig::deps fmt::fmt)/' CMakeLists.txt
 }
 
 hyprlang-devel_package() {
