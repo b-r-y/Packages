@@ -8,7 +8,7 @@ configure_args="-DZIG_TARGET_MCPU=baseline"
 make_cmd=make
 # we add xml2, zstd, zlib and ncurses
 # because our lld is static-only and requires those to work
-configure_args="-DZIG_TARGET_MCPU=baseline -DZIG_STATIC_LLVM=OFF" 
+configure_args="-DZIG_TARGET_MCPU=baseline -DCMAKE_BUILD_TYPE=Release -DZIG_STATIC_LLVM=OFF" 
 # Using shared LLVM often prevents linking segfaults in Void
 makedepends="ninja clang19-devel llvm19-devel lld19-devel libxml2-devel libzstd-devel ncurses-devel zlib-devel"
 short_desc="Programming language designed for robustness, optimality, and clarity"
@@ -22,7 +22,7 @@ nocross=yes
 
 export CMAKE_GENERATOR="Unix Makefiles"
 
-make_build_args="-j1"
+make_build_args="-j1 ZIG_BUILD_ARGS=--maxrss 12000000000"
 
 post_install() {
 	vlicense LICENSE
