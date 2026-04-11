@@ -20,6 +20,8 @@ nocross=yes
 
 export CMAKE_GENERATOR="Unix Makefiles"
 
+make_build_args="-j1"
+
 post_install() {
 	vlicense LICENSE
 }
