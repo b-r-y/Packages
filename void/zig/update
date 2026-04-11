@@ -1,2 +1,0 @@
-site=https://ziglang.org/download/index.json
-pattern='"(?!master)\K[0-9]+\.[0-9]+\.[0-9]+(?!-dev)'
