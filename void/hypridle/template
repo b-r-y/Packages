@@ -15,6 +15,7 @@ makedepends="
 	hyprutils-devel
 	wayland-devel
 	wayland-protocols
+	hyprland-protocols
 "
 short_desc="Hyprland's idle daemon"
 maintainer="hesam-init <hesam.init@gmail.com>"
