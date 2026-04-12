@@ -38,6 +38,7 @@ makedepends="
 	xcb-util-wm-devel
 	xcb-util-image-devel
 	xorg-server-xwayland
+	muparser-devel
 "
 depends="
 	hyprlang
@@ -60,6 +61,7 @@ depends="
 	xcb-util-keysyms
 	xorg-server-xwayland
 	re2
+	muparser
 "
 short_desc="Dynamic tiling Wayland compositor that doesn't sacrifice on its looks"
 maintainer="hesam-init <hesam.init@gmail.com>"
