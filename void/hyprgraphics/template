@@ -14,6 +14,7 @@ makedepends="
    pixman-devel
    cairo-devel
    file-devel
+   MesaLib-devel
 "
 short_desc="hyprland graphics resources and utilities"
 maintainer="hesam-init <hesam.init@gmail.com>"
