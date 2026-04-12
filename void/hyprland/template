@@ -39,6 +39,8 @@ makedepends="
 	xcb-util-image-devel
 	xorg-server-xwayland
 	muparser-devel
+	hyprwire
+	hyprland-guiutils
 "
 depends="
 	hyprlang
