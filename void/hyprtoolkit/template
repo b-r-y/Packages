@@ -1,0 +1,17 @@
+# Template for 'hyprtoolkit'
+pkgname=hyprtoolkit
+version=0.5.3
+revision=1
+build_style=cmake
+short_desc="Toolkit library for Hyprland ecosystem"
+maintainer="Rain Xelelo <rxelelo@outlook.com>"
+license="BSD-3-Clause"
+homepage="https://github.com/hyprwm/hyprtoolkit"
+hostmakedepends="cmake ninja pkg-config"
+makedepends="cairo-devel glib-devel MesaLib-devel libglvnd-devel hyprgraphics-devel hyprlang-devel hyprutils-devel iniparser-devel pango-devel pixman-devel wayland-devel libxkbcommon-devel libdrm-devel"
+distfiles="https://github.com/hyprwm/hyprtoolkit/archive/refs/tags/v${version}.tar.gz"
+checksum=7e6671fd4bf6f4b1eda0115aa187aa183db40d59049cca1d7546fb46fdb4cdc0
+
+post_install() {
+    vlicense LICENSE
+}
