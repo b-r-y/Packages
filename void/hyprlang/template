@@ -39,11 +39,6 @@ _apply_patch() {
 }
 
 pre_configure() {
-   if [ "$build_option_gcc" ]; then
-      _apply_patch -p1 ${FILESDIR}/cmake.patch
-      _apply_patch -p1 ${FILESDIR}/gcc.patch
-   fi
-
    if [ "$build_option_clang" ]; then
       export CC=clang
       export CXX=clang++
