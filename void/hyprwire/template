@@ -12,6 +12,11 @@ makedepends="hyprutils-devel pugixml-devel libffi-devel"
 distfiles="https://github.com/hyprwm/hyprwire/archive/refs/tags/v${version}.tar.gz"
 checksum=ba3ff4b82620209d5680ce0e771d0f2c41f78cdb96d5d84fa66e4f0709ca8de6
 
+pre_build() {
+	find ${wrksrc}/src -name "*.cpp" -exec \
+		sed -i 's/\([a-zA-Z_.]*\)\.append_range(\(.*\));/{ auto _r = \2; \1.insert(\1.end(), _r.begin(), _r.end()); }/g' {} +
+}
+
 post_install() {
-    vlicense LICENSE
+	vlicense LICENSE
 }
