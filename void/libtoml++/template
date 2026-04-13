@@ -13,7 +13,7 @@ distfiles="https://github.com/marzer/tomlplusplus/archive/refs/tags/v${version}.
 checksum=8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

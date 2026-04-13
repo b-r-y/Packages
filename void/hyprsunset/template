@@ -20,7 +20,7 @@ distfiles="https://github.com/hyprwm/hyprsunset/archive/refs/tags/v${version}.ta
 checksum=cf2b3cc836bdeb7ac3ae78cf98e8cc4a06093e8d8215ff4da2380843dcf1a5dc
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

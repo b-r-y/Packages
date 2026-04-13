@@ -12,7 +12,9 @@ makedepends="hyprutils-devel pugixml-devel libffi-devel"
 distfiles="https://github.com/hyprwm/hyprwire/archive/refs/tags/v${version}.tar.gz"
 checksum=ba3ff4b82620209d5680ce0e771d0f2c41f78cdb96d5d84fa66e4f0709ca8de6
 build_options="clang gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
+desc_option_gcc="Use gcc to build"
 
 if [ "$build_option_gcc" ]; then
 	hostmakedepends+=" gcc"

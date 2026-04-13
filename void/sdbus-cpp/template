@@ -15,7 +15,7 @@ distfiles="https://github.com/Kistler-Group/sdbus-cpp/archive/refs/tags/v${versi
 checksum=da69a0104beb6e51415a59f1571a47beb1eacc65cc6027b250eb1cf13ff4f802
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

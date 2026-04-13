@@ -27,7 +27,7 @@ distfiles="https://github.com/hyprwm/hyprland-qt-support/archive/refs/tags/v${ve
 checksum="cac1f980bd088b890097f3f999cfdf03e73ee94c53f3c92d0b3bc23baa9e7b2c"
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

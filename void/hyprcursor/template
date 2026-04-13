@@ -22,7 +22,7 @@ distfiles="https://github.com/hyprwm/hyprcursor/archive/refs/tags/v${version}.ta
 checksum=82af8b2ce27242ffdd6baebaa71b3f6c8665dc25c52bfcfccc16912622896af8
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

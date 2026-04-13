@@ -26,7 +26,7 @@ distfiles="https://github.com/hyprwm/hypridle/archive/refs/tags/v${version}.tar.
 checksum=c4ef2e2894fc2082cfdabe7db086b1f246e3f0de571f7f2c6b26d7c0d9a5f8f3
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

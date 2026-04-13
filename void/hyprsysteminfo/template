@@ -27,7 +27,7 @@ distfiles="https://github.com/hyprwm/hyprsysteminfo/archive/refs/tags/v${version
 checksum="359298d926e0a9ec670ff5b5100c1d08392a85126ea1d8f89f723d634fd218ce"
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

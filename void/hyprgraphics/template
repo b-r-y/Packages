@@ -26,7 +26,7 @@ distfiles="https://github.com/hyprwm/hyprgraphics/archive/refs/tags/v${version}.
 checksum=861ecaad872835922dd5745a612d7a4cc7bfc4babb1d06bc92bc63c2ac013b74
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

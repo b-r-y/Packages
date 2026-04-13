@@ -14,7 +14,7 @@ distfiles="https://github.com/stephenberry/glaze/archive/refs/tags/v${version}.t
 checksum=41c8184a4fc4ab4df92b9bdde9ff85c9c47ef8f7a0fe3972db369574ac130d3a
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

@@ -39,7 +39,7 @@ distfiles="https://github.com/hyprwm/xdg-desktop-portal-hyprland/archive/refs/ta
 checksum=8ba29b19d266d20e8c2611392b0e35b4c3373aeabc4f22c3907d915e553701d3
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

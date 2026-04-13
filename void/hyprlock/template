@@ -33,7 +33,7 @@ distfiles="https://github.com/hyprwm/hyprlock/archive/refs/tags/v${version}.tar.
 checksum=22e7346486d0f6a1ab46d9917ae5354de4d3d32350f6947bc7028a9c42859ce8
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

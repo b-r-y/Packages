@@ -74,7 +74,7 @@ distfiles="https://github.com/hyprwm/Hyprland/releases/download/v${version}/sour
 checksum=3c20a191a6f23af75f9a8db636d690c6adc95931447f9d69fb20884ec04c63ee
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

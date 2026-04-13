@@ -27,7 +27,7 @@ distfiles="https://github.com/hyprwm/hyprpolkitagent/archive/refs/tags/v${versio
 checksum=a8fa714b92d47331f056b608cb731dd1f5cc3845a9109cb22c6e6eb55b4eac84
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

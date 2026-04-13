@@ -14,7 +14,7 @@ distfiles="https://github.com/hyprwm/hyprwayland-scanner/archive/refs/tags/v${ve
 checksum=2125d279eea106e3e6c8dc9fa15181c75d67467b5352d24e2a07903b10abad62
 
 build_options="clang gcc"
-build_options_default="gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
 desc_option_gcc="Use gcc to build"
 

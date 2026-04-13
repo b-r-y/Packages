@@ -12,7 +12,9 @@ makedepends="hyprutils-devel gtk4-devel libadwaita-devel libdrm-devel pixman-dev
 distfiles="https://github.com/hyprwm/hyprland-guiutils/archive/refs/tags/v${version}.tar.gz"
 checksum=8de6ab7295dd120bab6b6b3e884b27b3c6ccc38ae345f3144bf9b5ad79251bcb
 build_options="clang gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
+desc_option_gcc="Use gcc to build"
 
 if [ "$build_option_gcc" ]; then
     hostmakedepends+=" gcc"

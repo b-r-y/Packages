@@ -12,7 +12,9 @@ makedepends="cairo-devel glib-devel MesaLib-devel libglvnd-devel hyprgraphics hy
 distfiles="https://github.com/hyprwm/hyprtoolkit/archive/refs/tags/v${version}.tar.gz"
 checksum=7e6671fd4bf6f4b1eda0115aa187aa183db40d59049cca1d7546fb46fdb4cdc0
 build_options="clang gcc"
+build_options_default="clang"
 desc_option_clang="Use clang to build"
+desc_option_gcc="Use gcc to build"
 
 if [ "$build_option_gcc" ]; then
     hostmakedepends+=" gcc"
