@@ -8,7 +8,7 @@ maintainer="Rain Xelelo <rxelelo@outlook.com>"
 license="BSD-3-Clause"
 homepage="https://github.com/hyprwm/hyprland-guiutils"
 hostmakedepends="cmake ninja pkg-config"
-makedepends="hyprutils-devel gtk4-devel libadwaita-devel libdrm-devel pixman-devel hyprtoolkit"
+makedepends="hyprutils-devel gtk4-devel libadwaita-devel libdrm-devel pixman-devel hyprtoolkit hyprlang-devel"
 distfiles="https://github.com/hyprwm/hyprland-guiutils/archive/refs/tags/v${version}.tar.gz"
 checksum=8de6ab7295dd120bab6b6b3e884b27b3c6ccc38ae345f3144bf9b5ad79251bcb
 
