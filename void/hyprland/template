@@ -3,7 +3,7 @@ pkgname=hyprland
 version=0.54.3
 revision=1
 build_style=cmake
-configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release -DNO_SYSTEMD=ON"
+configure_args="-DNO_SYSTEMD=ON -DUSE_NATIVE_EMBED=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
 hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja"
 makedepends="
 	hyprgraphics
@@ -84,8 +84,8 @@ if [ "$build_option_gcc" ]; then
 fi
 
 if [ "$build_option_clang" ]; then
-	hostmakedepends+=" clang19"
-	makedepends+=" libcxx libcxx-devel libcxxabi libcxxabi-devel"
+	hostmakedepends+=" clang21"
+	makedepends+=" libcxx libcxx-devel"
 fi
 
 if [ "$XBPS_TARGET_LIBC" = "glibc" ]; then

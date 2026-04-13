@@ -43,7 +43,7 @@ if [ "$build_option_gcc" ]; then
 fi
 
 if [ "$build_option_clang" ]; then
-	hostmakedepends+=" clang19"
+	hostmakedepends+=" clang21"
 	makedepends+=" libcxx libcxx-devel libcxxabi libcxxabi-devel"
 fi
 

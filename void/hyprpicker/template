@@ -12,9 +12,27 @@ homepage="https://github.com/hyprwm/hyprpicker"
 changelog="https://github.com/hyprwm/hyprpicker/releases"
 distfiles="https://github.com/hyprwm/hyprpicker/archive/refs/tags/v${version}.tar.gz"
 checksum=3dc3dec1ba3254a9ab3303461a12593f18318961934d24e4b1adc08927ba675d
+build_options="clang gcc"
+desc_option_clang="Use clang to build"
+
+if [ "$build_option_gcc" ]; then
+	hostmakedepends+=" gcc"
+fi
+
+if [ "$build_option_clang" ]; then
+	hostmakedepends+=" clang21"
+fi
 
 pre_build() {
 	make protocols
+}
+
+do_build() {
+	if [ "$build_option_clang" ]; then
+		export CC=clang
+		export CXX=clang++
+	fi
+	cmake_build
 }
 
 post_install() {

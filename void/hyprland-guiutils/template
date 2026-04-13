@@ -11,6 +11,24 @@ hostmakedepends="cmake ninja pkg-config"
 makedepends="hyprutils-devel gtk4-devel libadwaita-devel libdrm-devel pixman-devel hyprtoolkit hyprlang-devel aquamarine-devel"
 distfiles="https://github.com/hyprwm/hyprland-guiutils/archive/refs/tags/v${version}.tar.gz"
 checksum=8de6ab7295dd120bab6b6b3e884b27b3c6ccc38ae345f3144bf9b5ad79251bcb
+build_options="clang gcc"
+desc_option_clang="Use clang to build"
+
+if [ "$build_option_gcc" ]; then
+    hostmakedepends+=" gcc"
+fi
+
+if [ "$build_option_clang" ]; then
+    hostmakedepends+=" clang21"
+fi
+
+do_build() {
+    if [ "$build_option_clang" ]; then
+        export CC=clang
+        export CXX=clang++
+    fi
+    cmake_build
+}
 
 post_install() {
     vlicense LICENSE
