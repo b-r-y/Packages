@@ -1,0 +1,630 @@
+name: Build All Packages
+
+on:
+  repository_dispatch:
+    types: [build-arch, build-fedora, build-void]
+  push:
+    paths:
+      - 'arch/**'
+      - 'fedora/**'
+      - 'void/**'
+  workflow_dispatch:
+    inputs:
+      skip_packages:
+        description: 'Optional comma-separated package names to skip (without leading underscore)'
+        required: false
+        default: ''
+      skip_if_in_other_repos:
+        description: 'Skip package build if same package exists in other distro repos'
+        required: false
+        type: boolean
+        default: false
+
+run-name: ${{ github.event.client_payload.commit_message || github.event.client_payload.commit_sha || github.event.head_commit.message || github.ref_name }}
+
+jobs:
+  build-arch:
+    runs-on: codeberg-large
+    container:
+      image: archlinux:base-devel
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Clone Packages and Repo
+        run: |
+          printf '\033[1;34m==> Stage: Clone Packages and Repo (Arch)\033[0m\n'
+          pacman -Syu --noconfirm git
+          git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
+          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
+      
+      - name: Build Arch packages
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          pacman -Syu --noconfirm gnupg sudo
+          cd /tmp/packages/arch
+          useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          
+          for pkgdir in */; do
+            pkgname=$(basename "$pkgdir")
+            [[ "$pkgname" == _* ]] && continue
+            [ -f "$pkgdir/PKGBUILD" ] || continue
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$pkgname," && {
+                echo "Package $pkgname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            # Extract version and revision from PKGBUILD
+            source "$pkgdir/PKGBUILD"
+            pkgver_full="${pkgname}-${pkgver}-${pkgrel}"
+            
+            # Check if package already exists in repo
+            if ls /tmp/repo/arch/${pkgname}-*-*.pkg.tar.zst 1>/dev/null 2>&1; then
+              echo "Package $pkgver_full already exists in repo, skipping"
+              continue
+            fi
+
+            # Optional: skip if package exists in other repos
+            if [ "$SKIP_IF_OTHER" = "true" ]; then
+              if ls /tmp/repo/fedora/${pkgname}-*.rpm 1>/dev/null 2>&1 || ls /tmp/repo/void/${pkgname}-*.xbps 1>/dev/null 2>&1; then
+                echo "Package $pkgname exists in other repos, skipping"
+                continue
+              fi
+            fi
+            
+            echo "Building Arch package: $pkgver_full"
+            cd "$pkgdir"
+            chown -R builder:builder .
+            
+            # Enable loopback for GPG
+            su builder -c "mkdir -p ~/.gnupg && echo \"allow-loopback-pinentry\" > ~/.gnupg/gpg-agent.conf"
+            su builder -c "echo \"pinentry-mode loopback\" > ~/.gnupg/gpg.conf"
+            
+            # Import Key if provided
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              echo "${{ secrets.GPG_PRIVATE_KEY }}" | su builder -c "gpg --batch --import"
+            fi
+            
+            # Build
+            su builder -c "makepkg -sf --noconfirm"
+            
+            # Sign packages if GPG key is available
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              for pkg in *.pkg.tar.zst; do
+                [[ "$pkg" == *"-debug-"* ]] && continue
+                [ -f "$pkg" ] || continue
+                echo "Signing $pkg..."
+                echo "${{ secrets.GPG_PASSPHRASE }}" | su builder -c "gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign $pkg"
+              done
+            fi
+            
+            cd ..
+            echo "Built packages in $pkgdir:"
+            ls -lh "$pkgdir"/*.pkg.tar.zst 2>/dev/null || echo "No packages found"
+          done
+      
+      - name: Sync Arch packages to repo
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Sync Arch packages to repo\033[0m\n'
+          set -euo pipefail
+          shopt -s nullglob globstar
+
+          mkdir -p /tmp/repo/arch
+
+          parse_arch_pkg() {
+            local file="$1"
+            local base arch rel ver name tmp
+            base="${file%.pkg.tar.zst}"
+            arch="${base##*-}"
+            tmp="${base%-*}"
+            rel="${tmp##*-}"
+            tmp="${tmp%-*}"
+            ver="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
+          }
+
+          for pkg in /tmp/packages/arch/**/*.pkg.tar.zst; do
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrel _ <<< "$(parse_arch_pkg "$pkgfile")"
+            skip_copy=false
+
+            for existing in /tmp/repo/arch/*.pkg.tar.zst; do
+              existing_file=$(basename "$existing")
+              IFS='|' read -r existing_name existing_verrel _ <<< "$(parse_arch_pkg "$existing_file")"
+              [ "$existing_name" = "$name" ] || continue
+
+              if [ "$existing_verrel" = "$verrel" ]; then
+                echo "Arch: $pkgfile already present with same version ($verrel), skipping"
+                skip_copy=true
+              else
+                echo "Arch: replacing $existing_file with $pkgfile"
+                rm -f "$existing" "$existing.sig"
+              fi
+            done
+
+            if [ "$skip_copy" = false ]; then
+              cp "$pkg" /tmp/repo/arch/
+              if [ -f "$pkg.sig" ]; then
+                cp "$pkg.sig" /tmp/repo/arch/
+              fi
+            fi
+          done
+
+          if ls /tmp/repo/arch/*.pkg.tar.zst 1>/dev/null 2>&1; then
+            cd /tmp/repo/arch
+            rm -f universal-repo.db universal-repo.files
+            repo-add universal-repo.db.tar.gz *.pkg.tar.zst
+            ln -sf universal-repo.db.tar.gz universal-repo.db
+            ln -sf universal-repo.files.tar.gz universal-repo.files
+          fi
+
+          cd /tmp/repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add arch/
+
+          if git diff --staged --quiet; then
+            echo "No Arch changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update Arch packages [CI] - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PUSH_URL="https://oauth2:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git"
+
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$BRANCH" || true
+            if git push "$PUSH_URL" "$BRANCH"; then
+              echo "Arch sync push succeeded"
+              exit 0
+            fi
+            echo "Arch push failed on attempt $attempt, retrying..."
+            sleep 5
+          done
+
+          echo "Arch sync push failed after retries"
+          exit 1
+
+  build-fedora:
+    runs-on: codeberg-large
+    container:
+      image: fedora:latest
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Clone Packages and Repo
+        run: |
+          printf '\033[1;34m==> Stage: Clone Packages and Repo (Fedora)\033[0m\n'
+          dnf install -y git
+          git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
+          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
+      
+      - name: Build Fedora packages
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          dnf install -y rpm-build rpmdevtools dnf-plugins-core rpm-sign gnupg2 pinentry sudo spectool createrepo_c
+          FEDORA_DIR=/tmp/packages/fedora
+          cd "$FEDORA_DIR"
+          useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          
+          # Setup rpmbuild directory structure
+          rpmdev-setuptree
+          
+          for spec in $(ls "$FEDORA_DIR"/*.spec 2>/dev/null | xargs -n1 basename); do
+            case "$(basename "$spec")" in
+              _*)
+                echo "Skipping $spec (starts with underscore)"
+                continue
+                ;;
+            esac
+            spec_path="$FEDORA_DIR/$spec"
+            [ -f "$spec_path" ] || continue
+            
+            # Extract version and release from spec file
+            specname=$(basename "$spec" .spec)
+            pkgver=$(grep "^Version:" "$spec_path" | awk '{print $2}')
+            pkgrel=$(grep "^Release:" "$spec_path" | awk '{print $2}' | cut -d'%' -f1)
+            pkgver_full="${specname}-${pkgver}-${pkgrel}"
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$specname," && {
+                echo "Package $specname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            # Check if exact version-release already exists in repo
+            if ls /tmp/repo/fedora/${specname}-${pkgver}-${pkgrel}.fc*.x86_64.rpm 1>/dev/null 2>&1; then
+              echo "Package $pkgver_full already exists in repo, skipping"
+              continue
+            fi
+
+            # Optional: skip if package exists in other repos
+            if [ "$SKIP_IF_OTHER" = "true" ]; then
+              if ls /tmp/repo/arch/${specname}-*.pkg.tar.zst 1>/dev/null 2>&1 || ls /tmp/repo/void/${specname}-*.xbps 1>/dev/null 2>&1; then
+                echo "Package $specname exists in other repos, skipping"
+                continue
+              fi
+            fi
+            
+             echo "Building Fedora package from: $pkgver_full"
+             
+             # Clean build directories for this build (but keep RPMS/SRPMS)
+             rm -rf ~/rpmbuild/BUILD/* ~/rpmbuild/BUILDROOT/*
+             
+             # Setup GPG if key is provided
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+              GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk "{print \$2}" | cut -d"/" -f2 | head -1)
+              
+              # Configure RPM to use GPG
+              echo "%_signature gpg" >> ~/.rpmmacros
+              echo "%_gpg_name $GPG_KEY_ID" >> ~/.rpmmacros
+            fi
+            
+            # Copy spec file
+            cp "$spec_path" ~/rpmbuild/SPECS/
+            
+            # Copy sources if they exist locally
+            [ -d sources ] && cp sources/* ~/rpmbuild/SOURCES/ || true
+            
+            # Download sources using spectool
+            cd ~/rpmbuild/SPECS
+            spectool -g -R "$spec" || true
+            
+            # Install build dependencies
+            dnf builddep -y "$spec"
+            
+            # Build packages
+            rpmbuild -ba "$spec"
+
+            # Return to Fedora specs directory for next iteration
+            cd "$FEDORA_DIR"
+            
+            # Skip GPG signing (not supported in container)
+            
+            # Copy built packages back
+            cp ~/rpmbuild/RPMS/*/*.rpm /tmp/packages/fedora/ 2>/dev/null || true
+            cp ~/rpmbuild/SRPMS/*.rpm /tmp/packages/fedora/ 2>/dev/null || true
+            
+            echo "Built packages:"
+            ls -lh /tmp/packages/fedora/*.rpm 2>/dev/null || echo "No packages found"
+          done
+      
+      - name: Sync Fedora packages to repo
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Sync Fedora packages to repo\033[0m\n'
+          set -euo pipefail
+          shopt -s nullglob
+
+          mkdir -p /tmp/repo/fedora
+
+          parse_fedora_pkg() {
+            local file="$1"
+            local base arch rel ver name tmp
+            base="${file%.rpm}"
+            arch="${base##*.}"
+            tmp="${base%.*}"
+            rel="${tmp##*-}"
+            tmp="${tmp%-*}"
+            ver="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
+          }
+
+          for pkg in /tmp/packages/fedora/*.rpm; do
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrel _ <<< "$(parse_fedora_pkg "$pkgfile")"
+            skip_copy=false
+
+            for existing in /tmp/repo/fedora/*.rpm; do
+              existing_file=$(basename "$existing")
+              IFS='|' read -r existing_name existing_verrel _ <<< "$(parse_fedora_pkg "$existing_file")"
+              [ "$existing_name" = "$name" ] || continue
+
+              if [ "$existing_verrel" = "$verrel" ]; then
+                echo "Fedora: $pkgfile already present with same version ($verrel), skipping"
+                skip_copy=true
+              else
+                echo "Fedora: replacing $existing_file with $pkgfile"
+                rm -f "$existing"
+              fi
+            done
+
+            if [ "$skip_copy" = false ]; then
+              cp "$pkg" /tmp/repo/fedora/
+            fi
+          done
+
+          if ls /tmp/repo/fedora/*.rpm 1>/dev/null 2>&1; then
+            cd /tmp/repo/fedora
+            createrepo_c .
+          fi
+
+          cd /tmp/repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add fedora/
+
+          if git diff --staged --quiet; then
+            echo "No Fedora changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update Fedora packages [CI] - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PUSH_URL="https://oauth2:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git"
+
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$BRANCH" || true
+            if git push "$PUSH_URL" "$BRANCH"; then
+              echo "Fedora sync push succeeded"
+              exit 0
+            fi
+            echo "Fedora push failed on attempt $attempt, retrying..."
+            sleep 5
+          done
+
+          echo "Fedora sync push failed after retries"
+          exit 1
+
+  build-void:
+    runs-on: codeberg-large
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+      options: --privileged
+      volumes:
+        - /dev:/dev
+    steps:
+      - name: Prepare container
+        run: |
+          printf '\033[1;34m==> Stage: Prepare container (Void)\033[0m\n'
+          mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
+          sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
+          xbps-install -Syu xbps
+          xbps-install -y sudo bash curl git libstdc++
+          useradd -G xbuilder -M builder
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clone Packages and Repo
+        run: |
+          printf '\033[1;34m==> Stage: Clone Packages and Repo (Void)\033[0m\n'
+          git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
+          git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
+      
+      - name: Build Void packages
+        run: |
+          printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          VOID_DIR=/tmp/packages/void
+          
+          git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
+          for pkg in ghostty-terminfo ghostty zig llvm22; do
+            rm -rf /void-packages/srcpkgs/$pkg
+          done
+          cd /void-packages
+          echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
+          echo XBPS_CHROOT_CMD=uchroot >> etc/conf
+          echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+                    
+          cp -r "$VOID_DIR"/* srcpkgs/
+          
+          chown -R builder:builder /void-packages
+          sudo -Eu builder ./xbps-src binary-bootstrap
+          sudo -Eu builder mkdir -p /void-packages/etc/xbps.d/custom/30-myrepo.conf
+          sudo -Eu builder tee /void-packages/etc/xbps.d/custom/urepo.conf << 'EOF'
+          repository=https://universalrepo.r1xelelo.workers.dev/void
+          EOF
+          sudo -Eu builder mkdir -p /void-packages/masterdir-x86_64/var/db/xbps/keys
+          sudo -Eu builder tee masterdir-x86_64/var/db/xbps/keys/71:17:77:eb:82:c2:02:b6:8d:98:05:8d:19:9c:d5:1e.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+                  <key>public-key</key>
+                  <data>LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF5dGhqeTMzUTAyWWRiTStLVytxdQozeVo0UlV3N0dEcDFMaUo1M0JXSTdhRHRsYXJMNzNGZlRIY0RhVWdrL0FmMVJwMWJaVUlHQ3VHbDVGNEpoQ0dRCllueGNudW0zZzJZdkFnTWhRT0d3ZnVEYVN6ZFhGWFBtelBqNUdKZ2dOR2Y0NUtnWk1uQ000eGlvRTJ0MjBMblIKMmpHWUhMUDBDLzRDd2txM2xSbHBvYjNlTmxzT2VXSVR5Rk5IaU95cmdwZ1VjWldlbnBQU0FWTDZyM2RIQ29YaQo5NnhBNWlEVlZtT1RNYVV2a1p1Qk1la0lOT2paL1NSMENYTmQ4RVVKRTQ4eXNLZlVwL3NVZ2tmb0s3OWZzd0FoCmpCdTRoa3hOeUVPR2FWcFpVVEw1dGhqdWdkTlRQUFRxaDdma2Y4TUwrUTJZNkFQdlpNZlJ4WmdxR0dtWWZNTGMKdUF6aVBidFMwYnI4VVlOcmhGOUo2U0N2Q1hOWG9Hb1FYVkpoOTBWc2FtTDdaV2p2cjIwbWdQOHVuTXdPS0dpaQp4NkJOSEZlNUp0QmJFSk9ETUdpUGdMWG0zK3J1MXJFTnR5U3gweDV2T3lFZWxJdFJ0aUdhSTBxWUJlRWhrdSttCmZoTG14ZHkvbkNibFZ3MVZkeVZkb0RxWTRXK21WQmVYNEJaZzNRK0pKbHNGN3U1Szdld1o1UU5ITFdlbUZjbmMKTWphS1dRY2M5cWFpZEs5MzdyZmZrU283aVk1dlZOWWl2eWQ1b3FaY3YzYXFNNWxqd3QyaUFCNUJ5blFCYWtydAo4ZWwrUStPNTE2VG52ZkVpMG1DZzJJcmlmdTFZMlZyb0pWQVlMRmkraVVJOVgyQW92czZiWkdkOStTc01RNnJFClAwMkV4dGtjdmZReFNCOTVWbHM4RW04Q0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=</data>
+                  <key>public-key-size</key>
+                  <integer>4096</integer>
+                  <key>signature-by</key>
+                  <string>Universal Repository CI &lt;ci@universalrepo.local&gt;</string>
+          </dict>
+          </plist>
+          EOF
+          xbps-install -S
+          sudo -Eu builder xbps-install -r /void-packages/masterdir-x86_64 jq curl -y
+          #sudo -Eu builder bash -c 'cat /tmp/packages/common/shlibs >> /void-packages/common/shlibs'
+          sudo -Eu builder bash -c '
+          while IFS= read -r line; do
+              [[ -z "$line" ]] && continue
+              lib=$(echo "$line" | awk "{print \$1}")
+              base=$(echo "$lib" | sed "s/\.so\.[0-9]*$//")
+              sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
+              echo "$line" >> /void-packages/common/shlibs
+            done < /tmp/packages/common/shlibs
+          '
+          sudo -Eu builder bash -c 'cat /void-packages/common/shlibs | grep libhyprutils'
+          
+          for pkgdir in "$VOID_DIR"/*; do
+            [ -d "$pkgdir" ] || continue
+            pkgname=$(basename "$pkgdir")
+            case "$pkgname" in
+              _*)
+              echo "Skipping $pkgdir (starts with underscore)"
+              continue
+              ;;
+            esac
+            [ -f "$pkgdir/template" ] || continue
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$pkgname," && {
+                echo "Package $pkgname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            # Extract version and revision from template without sourcing
+            version=$(grep '^version=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            revision=$(grep '^revision=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            pkgver_full="${pkgname}-${version}_${revision}"
+            
+            # Check if exact version already exists in repo
+            if ls /tmp/repo/void/${pkgname}-${version}_${revision}*.xbps 1>/dev/null 2>&1; then
+              echo "Package $pkgver_full already exists in repo, skipping"
+              continue
+            fi
+
+            # Optional: skip if package exists in other repos
+            if [ "$SKIP_IF_OTHER" = "true" ]; then
+              if ls /tmp/repo/arch/${pkgname}-*.pkg.tar.zst 1>/dev/null 2>&1 || ls /tmp/repo/fedora/${pkgname}-*.rpm 1>/dev/null 2>&1; then
+                echo "Package $pkgname exists in other repos, skipping"
+                continue
+              fi
+            fi
+            
+            echo "Building Void package: $pkgver_full"
+            
+            # Copy template to srcpkgs
+            mkdir -p /void-packages/srcpkgs/$pkgname
+            cp "$pkgdir/template" /void-packages/srcpkgs/$pkgname/
+            chown -R builder:builder /void-packages/srcpkgs/$pkgname
+            
+                       
+            # Build package
+            #cat /void-packages/common/shlibs
+            sudo -Eu builder sh -c "cd /void-packages && ./xbps-src -E pkg $pkgname"
+                        
+            # Skip GPG signing (not supported in container)
+            
+            # Copy built packages to output
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /tmp/packages/void/ \;
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /tmp/packages/void/ \; 2>/dev/null || true
+            
+            echo "Built packages:"
+            ls -lh /tmp/packages/void/*.xbps 2>/dev/null || echo "No packages found"
+          done
+      
+      - name: Sync Void packages to repo
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
+          set -euo pipefail
+          shopt -s nullglob
+
+          mkdir -p /tmp/repo/void
+
+          parse_void_pkg() {
+            local file="$1"
+            local base arch verrev name tmp
+            base="${file%.xbps}"
+            arch="${base##*.}"
+            tmp="${base%.*}"
+            verrev="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
+          }
+
+          for pkg in /tmp/packages/void/*.xbps; do
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
+            skip_copy=false
+
+            for existing in /tmp/repo/void/*.xbps; do
+              existing_file=$(basename "$existing")
+              IFS='|' read -r existing_name existing_verrev _ <<< "$(parse_void_pkg "$existing_file")"
+              [ "$existing_name" = "$name" ] || continue
+
+              if [ "$existing_verrev" = "$verrev" ]; then
+                echo "Void: $pkgfile already present with same version ($verrev), skipping"
+                skip_copy=true
+              else
+                echo "Void: replacing $existing_file with $pkgfile"
+                rm -f "$existing" "$existing.sig" "$existing.sig2"
+              fi
+            done
+
+            if [ "$skip_copy" = false ]; then
+              cp "$pkg" /tmp/repo/void/
+              if [ -f "$pkg.sig" ]; then
+                cp "$pkg.sig" /tmp/repo/void/
+              fi
+              if [ -f "$pkg.sig2" ]; then
+                cp "$pkg.sig2" /tmp/repo/void/
+              fi
+            fi
+          done
+
+          if ls /tmp/repo/void/*.xbps 1>/dev/null 2>&1; then
+            cd /tmp/repo/void
+            XBPS_ARCH=x86_64 xbps-rindex -a *.xbps
+
+            if [ -n "${{ secrets.XBPS_PRIVATE_KEY }}" ]; then
+              echo "Signing Void packages and repository metadata..."
+              mkdir -p /tmp/xbps-sign
+              printf '%s\n' "${{ secrets.XBPS_PRIVATE_KEY }}" > /tmp/xbps-sign/id_rsa
+              chmod 600 /tmp/xbps-sign/id_rsa
+
+              for p in *.xbps; do
+                xbps-rindex --privkey /tmp/xbps-sign/id_rsa -S "$p" || true
+              done
+              XBPS_ARCH=x86_64 xbps-rindex --signedby 'Universal Repository CI <ci@universalrepo.local>' --privkey /tmp/xbps-sign/id_rsa -s . || true
+              rm -rf /tmp/xbps-sign
+            else
+              echo "XBPS_PRIVATE_KEY secret not set; skipping Void package signing"
+            fi
+          fi
+
+          cd /tmp/repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add void/
+
+          if git diff --staged --quiet; then
+            echo "No Void changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update Void packages [CI] - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PUSH_URL="https://oauth2:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/UniversalRepository/repo.git"
+
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$BRANCH" || true
+            if git push "$PUSH_URL" "$BRANCH"; then
+              echo "Void sync push succeeded"
+              exit 0
+            fi
+            echo "Void push failed on attempt $attempt, retrying..."
+            sleep 5
+          done
+
+          echo "Void sync push failed after retries"
+          exit 1
