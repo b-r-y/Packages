@@ -28,7 +28,7 @@ jobs:
       options: --privileged
     steps:
       - name: Install Node.js for runner
-        run: pacman -Syu --noconfirm nodej
+        run: pacman -Syu --noconfirm nodejs
         
       - name: Checkout repository
         uses: actions/checkout@v4
