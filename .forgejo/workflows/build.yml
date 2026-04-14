@@ -195,7 +195,7 @@ jobs:
       options: --privileged
     steps:
       - name: Install Node.js for runner
-        uses: dnf install nodejs -y
+        run: dnf install -y nodejs git 
         
       - name: Checkout repository
         uses: actions/checkout@v4
