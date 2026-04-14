@@ -24,7 +24,7 @@ run-name: ${{ github.event.client_payload.commit_message || github.event.client_
 
 jobs:
   build-arch:
-    runs-on: codeberg-large
+    runs-on: codeberg-medium
     container:
       image: archlinux:base-devel
       options: --privileged
@@ -198,7 +198,7 @@ jobs:
           exit 1
 
   build-fedora:
-    runs-on: codeberg-large
+    runs-on: codeberg-medium
     container:
       image: fedora:latest
       options: --privileged
@@ -390,7 +390,7 @@ jobs:
           exit 1
 
   build-void:
-    runs-on: codeberg-large
+    runs-on: codeberg-medium
     container:
       image: ghcr.io/void-linux/void-glibc-full:latest
       options: --privileged
