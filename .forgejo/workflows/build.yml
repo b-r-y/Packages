@@ -27,8 +27,8 @@ jobs:
       image: archlinux:base-devel
       options: --privileged
     steps:
-      - name: Nodejs install
-        uses: pacman -S nodejs
+      - name: Install Node.js for runner
+        run: pacman -Syu --noconfirm nodej
         
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -194,8 +194,8 @@ jobs:
       image: fedora:latest
       options: --privileged
     steps:
-      - name: Nodejs install
-        uses: dnf install nodejs
+      - name: Install Node.js for runner
+        uses: dnf install nodejs -y
         
       - name: Checkout repository
         uses: actions/checkout@v4
