@@ -22,7 +22,7 @@ run-name: ${{ github.event.head_commit.message || github.ref_name }}
 
 jobs:
   build-arch:
-    runs-on: ubuntu-latest
+    runs-on: codeberg-medium
     container:
       image: archlinux:base-devel
       options: --privileged
@@ -186,7 +186,7 @@ jobs:
           exit 1
 
   build-fedora:
-    runs-on: ubuntu-latest
+    runs-on: codeberg-medium
     container:
       image: fedora:latest
       options: --privileged
@@ -357,7 +357,7 @@ jobs:
           exit 1
 
   build-void:
-    runs-on: ubuntu-latest
+    runs-on: codeberg-medium
     container:
       image: ghcr.io/void-linux/void-glibc-full:latest
       options: --privileged
