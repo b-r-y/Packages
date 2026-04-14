@@ -27,6 +27,9 @@ jobs:
       image: archlinux:base-devel
       options: --privileged
     steps:
+      - name: Nodejs install
+        uses: pacman -S nodejs
+        
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -191,6 +194,9 @@ jobs:
       image: fedora:latest
       options: --privileged
     steps:
+      - name: Nodejs install
+        uses: dnf install nodejs
+        
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -370,7 +376,7 @@ jobs:
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
           xbps-install -Syu xbps
-          xbps-install -y sudo bash curl git libstdc++
+          xbps-install -y sudo bash curl git libstdc++ nodejs
           useradd -G xbuilder -M builder
 
       - name: Checkout
