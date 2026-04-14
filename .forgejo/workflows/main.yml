@@ -1,5 +1,4 @@
 name: OS Build Dispatcher
-on: [push]
 
 jobs:
   trigger-build:
