@@ -20,7 +20,8 @@ steps:
     image: *arch_image
     privileged: true
     commands:
-      - printf '\033[1;34m==> Stage: Clone Packages and Repo (Arch)\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Clone Packages and Repo (Arch)\033[0m\n'
       - pacman -Syu --noconfirm git
       - git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
       - git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
@@ -33,7 +34,8 @@ steps:
       - GPG_PRIVATE_KEY
       - GPG_PASSPHRASE
     commands:
-      - printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
       - SKIP_INPUT="${CI_PIPELINE_PARAM_SKIP_PACKAGES:-}"
       - SKIP_IF_OTHER="${CI_PIPELINE_PARAM_SKIP_IF_IN_OTHER_REPOS:-false}"
       - pacman -Syu --noconfirm gnupg sudo
@@ -103,7 +105,8 @@ steps:
     environment:
       - CODEBERG_TOKEN
     commands:
-      - printf '\033[1;34m==> Stage: Sync Arch packages to repo\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Sync Arch packages to repo\033[0m\n'
       - set -euo pipefail
       - shopt -s nullglob globstar
       - mkdir -p /tmp/repo/arch
@@ -188,7 +191,8 @@ steps:
     image: *fedora_image
     privileged: true
     commands:
-      - printf '\033[1;34m==> Stage: Clone Packages and Repo (Fedora)\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Clone Packages and Repo (Fedora)\033[0m\n'
       - dnf install -y git
       - git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
       - git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
@@ -200,7 +204,8 @@ steps:
     environment:
       - GPG_PRIVATE_KEY
     commands:
-      - printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
       - SKIP_INPUT="${CI_PIPELINE_PARAM_SKIP_PACKAGES:-}"
       - SKIP_IF_OTHER="${CI_PIPELINE_PARAM_SKIP_IF_IN_OTHER_REPOS:-false}"
       - dnf install -y rpm-build rpmdevtools dnf-plugins-core rpm-sign gnupg2 pinentry sudo spectool createrepo_c
@@ -279,7 +284,8 @@ steps:
     environment:
       - CODEBERG_TOKEN
     commands:
-      - printf '\033[1;34m==> Stage: Sync Fedora packages to repo\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Sync Fedora packages to repo\033[0m\n'
       - set -euo pipefail
       - shopt -s nullglob
       - mkdir -p /tmp/repo/fedora
@@ -358,7 +364,8 @@ steps:
     image: *void_image
     privileged: true
     commands:
-      - printf '\033[1;34m==> Stage: Prepare container (Void)\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Prepare container (Void)\033[0m\n'
       - mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
       - sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
       - xbps-install -Syu xbps
@@ -370,7 +377,8 @@ steps:
     privileged: true
     depends_on: [prepare-void]
     commands:
-      - printf '\033[1;34m==> Stage: Clone Packages and Repo (Void)\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Clone Packages and Repo (Void)\033[0m\n'
       - git clone https://codeberg.org/UniversalRepository/Packages.git /tmp/packages
       - git clone https://codeberg.org/UniversalRepository/repo.git /tmp/repo
 
@@ -381,7 +389,8 @@ steps:
     environment:
       - XBPS_PRIVATE_KEY
     commands:
-      - printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
       - SKIP_INPUT="${CI_PIPELINE_PARAM_SKIP_PACKAGES:-}"
       - SKIP_IF_OTHER="${CI_PIPELINE_PARAM_SKIP_IF_IN_OTHER_REPOS:-false}"
       - VOID_DIR=/tmp/packages/void
@@ -486,7 +495,8 @@ steps:
       - CODEBERG_TOKEN
       - XBPS_PRIVATE_KEY
     commands:
-      - printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
+      - |
+        printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
       - set -euo pipefail
       - shopt -s nullglob
       - mkdir -p /tmp/repo/void
