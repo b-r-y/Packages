@@ -22,7 +22,7 @@ when:
   - event: manual
 
 steps:
-  clone-packages:
+  copy-packages:
     image: archlinux:base-devel
     <<: *env
     commands:
