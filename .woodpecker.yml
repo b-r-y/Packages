@@ -346,7 +346,7 @@ steps:
 
         xbps-install -S || true
         chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
-        sudo -Eu builder xbps-install -r /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/masterdir-x86_64 jq curl -y
+        sudo -Eu builder xbps-install -r /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/masterdir-x86_64 -S jq curl -y
 
         sudo -Eu builder bash -c '
           while IFS= read -r line; do
