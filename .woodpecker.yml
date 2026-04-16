@@ -303,7 +303,7 @@ steps:
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
-        xbps-install -y sudo bash curl git libstdc++ proot bwrap
+        xbps-install -y sudo bash curl git libstdc++ proot bubblewrap
         useradd -G xbuilder -M builder 2>/dev/null || true
 
         VOID_DIR=/woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void
