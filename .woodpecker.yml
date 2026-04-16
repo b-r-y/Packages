@@ -385,7 +385,7 @@ steps:
           cp "$pkgdir/template" /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/srcpkgs/$pkgname/
           chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/srcpkgs/$pkgname
 
-          sudo -Eu builder sh -c "cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages && ./xbps-src -E pkg $pkgname"
+          cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages && ./xbps-src -m / -E pkg $pkgname
 
           find /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \;
           find /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \; 2>/dev/null || true
