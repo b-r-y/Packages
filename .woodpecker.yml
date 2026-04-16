@@ -39,7 +39,7 @@ steps:
   build-arch:
     image: archlinux:base-devel
     <<: *env
-    depends_on: [clone-arch]
+    depends_on: [copy-packages]
     commands:
       - |
         printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
