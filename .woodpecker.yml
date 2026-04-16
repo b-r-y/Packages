@@ -320,7 +320,6 @@ steps:
         echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
 
         cp -r "$VOID_DIR"/* srcpkgs/
-        chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
 
         sudo -Eu builder ./xbps-src binary-bootstrap
 
@@ -346,6 +345,7 @@ steps:
         PLIST
 
         xbps-install -S || true
+        chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
         sudo -Eu builder xbps-install -r /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/masterdir-x86_64 jq curl -y
 
         sudo -Eu builder bash -c '
