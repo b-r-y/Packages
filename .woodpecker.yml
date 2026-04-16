@@ -33,7 +33,6 @@ steps:
       - |
         printf '\033[1;34m==> Stage: Clone Packages and Repo (Arch)\033[0m\n'
         pacman -Syu --noconfirm git
-        git clone https://codeberg.org/UniversalRepository/Packages.git packages
         git clone https://codeberg.org/UniversalRepository/repo.git repo
 
   build-arch:
@@ -174,7 +173,6 @@ steps:
       - |
         printf '\033[1;34m==> Stage: Clone Packages and Repo (Fedora)\033[0m\n'
         dnf install -y git
-        git clone https://codeberg.org/UniversalRepository/Packages.git packages
         git clone https://codeberg.org/UniversalRepository/repo.git repo
 
   build-fedora:
