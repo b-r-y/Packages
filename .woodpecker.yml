@@ -22,7 +22,7 @@ when:
   - event: manual
 
 steps:
-  copy-packages:
+  clone-repos:
     image: archlinux:base-devel
     <<: *env
     commands:
@@ -31,20 +31,18 @@ steps:
         pacman -Syu --noconfirm git
         git clone https://codeberg.org/UniversalRepository/Packages.git packages
         git clone https://codeberg.org/UniversalRepository/repo.git repo
-        find / | grep repo
-        find / | grep packages
   # ─────────────────────────────────────────────
   # ARCH
   # ─────────────────────────────────────────────
   build-arch:
     image: archlinux:base-devel
     <<: *env
-    depends_on: [copy-packages]
+    depends_on: [clone-repos]
     commands:
       - |
         printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
         pacman -Syu --noconfirm gnupg sudo
-        cd /packages/arch
+        cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/arch
         useradd -m builder && echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
         for pkgdir in */; do
@@ -62,7 +60,7 @@ steps:
           source "$pkgdir/PKGBUILD"
           pkgver_full="${pkgname}-${pkgver}-${pkgrel}"
 
-          if ls /repo/arch/${pkgname}-*-*.pkg.tar.zst 1>/dev/null 2>&1; then
+          if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch/${pkgname}-*-*.pkg.tar.zst 1>/dev/null 2>&1; then
             echo "Package $pkgver_full already in repo, skipping"
             continue
           fi
@@ -104,7 +102,7 @@ steps:
         set -euo pipefail
         shopt -s nullglob globstar
         pacman -Syu --noconfirm git
-        mkdir -p /repo/arch
+        mkdir -p /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch
 
         parse_arch_pkg() {
           local file="$1" base arch rel ver name tmp
@@ -116,12 +114,12 @@ steps:
           printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
         }
 
-        for pkg in /packages/arch/**/*.pkg.tar.zst; do
+        for pkg in /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/arch/**/*.pkg.tar.zst; do
           pkgfile=$(basename "$pkg")
           IFS='|' read -r name verrel _ <<< "$(parse_arch_pkg "$pkgfile")"
           skip_copy=false
 
-          for existing in /repo/arch/*.pkg.tar.zst; do
+          for existing in /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch/*.pkg.tar.zst; do
             existing_file=$(basename "$existing")
             IFS='|' read -r existing_name existing_verrel _ <<< "$(parse_arch_pkg "$existing_file")"
             [ "$existing_name" = "$name" ] || continue
@@ -135,20 +133,20 @@ steps:
           done
 
           if [ "$skip_copy" = false ]; then
-            cp "$pkg" /repo/arch/
-            [ -f "$pkg.sig" ] && cp "$pkg.sig" /repo/arch/ || true
+            cp "$pkg" /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch/
+            [ -f "$pkg.sig" ] && cp "$pkg.sig" /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch/ || true
           fi
         done
 
-        if ls /repo/arch/*.pkg.tar.zst 1>/dev/null 2>&1; then
-          cd /repo/arch
+        if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch/*.pkg.tar.zst 1>/dev/null 2>&1; then
+          cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/arch
           rm -f universal-repo.db universal-repo.files
           repo-add universal-repo.db.tar.gz *.pkg.tar.zst
           ln -sf universal-repo.db.tar.gz universal-repo.db
           ln -sf universal-repo.files.tar.gz universal-repo.files
         fi
 
-        cd /repo
+        cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo
         git config user.name "Woodpecker CI"
         git config user.email "ci@woodpecker"
         git add arch/
@@ -167,17 +165,16 @@ steps:
   # ─────────────────────────────────────────────
   # FEDORA
   # ─────────────────────────────────────────────
-
   build-fedora:
     image: fedora:latest
     <<: *env
-    depends_on: [copy-packages]
+    depends_on: [clone-repos]
     commands:
       - |
         printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
         dnf install -y rpm-build rpmdevtools dnf-plugins-core rpm-sign gnupg2 pinentry sudo spectool createrepo_c
         rpmdev-setuptree
-        FEDORA_DIR=/packages/fedora
+        FEDORA_DIR=/woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/fedora
         cd "$FEDORA_DIR"
 
         for spec in $(ls "$FEDORA_DIR"/*.spec 2>/dev/null | xargs -n1 basename); do
@@ -197,7 +194,7 @@ steps:
             }
           fi
 
-          if ls /repo/fedora/${specname}-${pkgver}-${pkgrel}.fc*.x86_64.rpm 1>/dev/null 2>&1; then
+          if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora/${specname}-${pkgver}-${pkgrel}.fc*.x86_64.rpm 1>/dev/null 2>&1; then
             echo "Package $pkgver_full already in repo, skipping"
             continue
           fi
@@ -221,10 +218,10 @@ steps:
           rpmbuild -ba "$spec"
 
           cd "$FEDORA_DIR"
-          cp ~/rpmbuild/RPMS/*/*.rpm /packages/fedora/ 2>/dev/null || true
-          cp ~/rpmbuild/SRPMS/*.rpm /packages/fedora/ 2>/dev/null || true
+          cp ~/rpmbuild/RPMS/*/*.rpm /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/fedora/ 2>/dev/null || true
+          cp ~/rpmbuild/SRPMS/*.rpm /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/fedora/ 2>/dev/null || true
           echo "Built packages:"
-          ls -lh /packages/fedora/*.rpm 2>/dev/null || echo "No packages found"
+          ls -lh /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/fedora/*.rpm 2>/dev/null || echo "No packages found"
         done
 
   sync-fedora:
@@ -237,7 +234,7 @@ steps:
         set -euo pipefail
         shopt -s nullglob
         dnf install -y git createrepo_c
-        mkdir -p /repo/fedora
+        mkdir -p /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora
 
         parse_fedora_pkg() {
           local file="$1" base arch rel ver name tmp
@@ -249,12 +246,12 @@ steps:
           printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
         }
 
-        for pkg in /packages/fedora/*.rpm; do
+        for pkg in /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/fedora/*.rpm; do
           pkgfile=$(basename "$pkg")
           IFS='|' read -r name verrel _ <<< "$(parse_fedora_pkg "$pkgfile")"
           skip_copy=false
 
-          for existing in /repo/fedora/*.rpm; do
+          for existing in /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora/*.rpm; do
             existing_file=$(basename "$existing")
             IFS='|' read -r existing_name existing_verrel _ <<< "$(parse_fedora_pkg "$existing_file")"
             [ "$existing_name" = "$name" ] || continue
@@ -267,12 +264,12 @@ steps:
             fi
           done
 
-          [ "$skip_copy" = false ] && cp "$pkg" /repo/fedora/ || true
+          [ "$skip_copy" = false ] && cp "$pkg" /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora/ || true
         done
 
-        ls /repo/fedora/*.rpm 1>/dev/null 2>&1 && { cd /repo/fedora; createrepo_c .; }
+        ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora/*.rpm 1>/dev/null 2>&1 && { cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/fedora; createrepo_c .; }
 
-        cd /repo
+        cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo
         git config user.name "Woodpecker CI"
         git config user.email "ci@woodpecker"
         git add fedora/
@@ -294,23 +291,22 @@ steps:
   build-void:
     image: ghcr.io/void-linux/void-glibc-full:latest
     <<: *env
-    depends_on: [copy-packages]
+    depends_on: [clone-repos]
     commands:
       - |
-        printf '\033[1;34m==> Stage: Prepare Void \033[0m\n'
+        printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
         xbps-install -y sudo bash curl git libstdc++
         useradd -G xbuilder -M builder 2>/dev/null || true
-        printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
         xbps-install -y sudo bash curl git libstdc++ proot
         useradd -G xbuilder -M builder 2>/dev/null || true
 
-        VOID_DIR=/packages/void
+        VOID_DIR=/woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void
 
         git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
 
@@ -359,7 +355,7 @@ steps:
             base=$(echo "$lib" | sed "s/\.so\.[0-9]*$//")
             sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
             echo "$line" >> /void-packages/common/shlibs
-          done < /packages/common/shlibs
+          done < /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/common/shlibs
         '
 
         for pkgdir in "$VOID_DIR"/*; do
@@ -379,7 +375,7 @@ steps:
           revision=$(grep '^revision=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
           pkgver_full="${pkgname}-${version}_${revision}"
 
-          if ls /repo/void/${pkgname}-${version}_${revision}*.xbps 1>/dev/null 2>&1; then
+          if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/${pkgname}-${version}_${revision}*.xbps 1>/dev/null 2>&1; then
             echo "Package $pkgver_full already in repo, skipping"
             continue
           fi
@@ -391,11 +387,11 @@ steps:
 
           sudo -Eu builder sh -c "cd /void-packages && ./xbps-src -E pkg $pkgname"
 
-          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /packages/void/ \;
-          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /packages/void/ \; 2>/dev/null || true
+          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \;
+          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \; 2>/dev/null || true
 
           echo "Built packages:"
-          ls -lh /packages/void/*.xbps 2>/dev/null || echo "No packages found"
+          ls -lh /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/*.xbps 2>/dev/null || echo "No packages found"
         done
 
   sync-void:
@@ -411,7 +407,7 @@ steps:
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
         xbps-install -y git
-        mkdir -p /repo/void
+        mkdir -p /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void
 
         parse_void_pkg() {
           local file="$1" base arch verrev name tmp
@@ -423,12 +419,12 @@ steps:
           printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
         }
 
-        for pkg in /packages/void/*.xbps; do
+        for pkg in /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/*.xbps; do
           pkgfile=$(basename "$pkg")
           IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
           skip_copy=false
 
-          for existing in /repo/void/*.xbps; do
+          for existing in /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/*.xbps; do
             existing_file=$(basename "$existing")
             IFS='|' read -r existing_name existing_verrev _ <<< "$(parse_void_pkg "$existing_file")"
             [ "$existing_name" = "$name" ] || continue
@@ -442,14 +438,14 @@ steps:
           done
 
           if [ "$skip_copy" = false ]; then
-            cp "$pkg" /repo/void/
-            [ -f "$pkg.sig"  ] && cp "$pkg.sig"  /repo/void/ || true
-            [ -f "$pkg.sig2" ] && cp "$pkg.sig2" /repo/void/ || true
+            cp "$pkg" /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/
+            [ -f "$pkg.sig"  ] && cp "$pkg.sig"  /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/ || true
+            [ -f "$pkg.sig2" ] && cp "$pkg.sig2" /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/ || true
           fi
         done
 
-        if ls /repo/void/*.xbps 1>/dev/null 2>&1; then
-          cd /repo/void
+        if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/*.xbps 1>/dev/null 2>&1; then
+          cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void
           XBPS_ARCH=x86_64 xbps-rindex -a *.xbps
 
           if [ -n "$XBPS_PRIVATE_KEY" ]; then
@@ -469,7 +465,7 @@ steps:
           fi
         fi
 
-        cd /repo
+        cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo
         git config user.name "Woodpecker CI"
         git config user.email "ci@woodpecker"
         git add void/
