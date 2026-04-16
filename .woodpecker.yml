@@ -287,7 +287,7 @@ steps:
         echo "Fedora push failed after retries"; exit 1
 
   # ─────────────────────────────────────────────
-  # VOID (unprivileged — proot, no uchroot)
+  # VOID
   # ─────────────────────────────────────────────
   build-void:
     image: ghcr.io/void-linux/void-glibc-full:latest
@@ -320,7 +320,7 @@ steps:
         # Unprivileged build configuration — proot instead of uchroot
         cat >> etc/conf <<'CONF'
         XBPS_BUILD_ENVIRONMENT=void-packages-ci
-        XBPS_CHROOT_CMD=proot
+        XBPS_CHROOT_CMD=uunshare
         XBPS_ALLOW_RESTRICTED=yes
         CONF
 
