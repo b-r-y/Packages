@@ -344,7 +344,7 @@ steps:
         </plist>
         PLIST
 
-        xbps-install -i --repository https://repo-default.voidlinux.org/current -r /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/masterdir-x86_64 -S jq curl -y
+        xbps-install -S jq curl -y
         chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
         printf '\033[1;34m==> jq is fine\033[0m\n'
 
