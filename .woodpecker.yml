@@ -321,6 +321,7 @@ steps:
 
         cp -r "$VOID_DIR"/* srcpkgs/
 
+        chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
         sudo -Eu builder ./xbps-src binary-bootstrap
 
         mkdir -p /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/etc/xbps.d/custom/
