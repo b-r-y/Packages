@@ -308,13 +308,13 @@ steps:
 
         VOID_DIR=/woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void
 
-        git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
+        git clone --depth=1 https://github.com/void-linux/void-packages.git void-packages
 
         for pkg in ghostty-terminfo ghostty zig llvm22; do
-          rm -rf /void-packages/srcpkgs/$pkg
+          rm -rf void-packages/srcpkgs/$pkg
         done
 
-        cd /void-packages
+        cd void-packages
         echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
         echo XBPS_CHROOT_CMD=proot >> etc/conf
         echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
@@ -324,8 +324,8 @@ steps:
 
         sudo -Eu builder ./xbps-src binary-bootstrap
 
-        mkdir -p /void-packages/etc/xbps.d/custom/
-        tee /void-packages/etc/xbps.d/custom/urepo.conf << 'EOF'
+        mkdir -p void-packages/etc/xbps.d/custom/
+        tee void-packages/etc/xbps.d/custom/urepo.conf << 'EOF'
         repository=https://universalrepo.r1xelelo.workers.dev/void
         EOF
 
@@ -346,15 +346,15 @@ steps:
         PLIST
 
         xbps-install -S || true
-        sudo -Eu builder xbps-install -r /void-packages/masterdir-x86_64 jq curl -y
+        sudo -Eu builder xbps-install -r void-packages/masterdir-x86_64 jq curl -y
 
         sudo -Eu builder bash -c '
           while IFS= read -r line; do
             [[ -z "$line" ]] && continue
             lib=$(echo "$line" | awk "{print \$1}")
             base=$(echo "$lib" | sed "s/\.so\.[0-9]*$//")
-            sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
-            echo "$line" >> /void-packages/common/shlibs
+            sed -i "/^${base}\.so\./d" void-packages/common/shlibs
+            echo "$line" >> void-packages/common/shlibs
           done < /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/common/shlibs
         '
 
@@ -381,14 +381,14 @@ steps:
           fi
 
           echo "Building Void package: $pkgver_full"
-          mkdir -p /void-packages/srcpkgs/$pkgname
-          cp "$pkgdir/template" /void-packages/srcpkgs/$pkgname/
-          chown -R builder:builder /void-packages/srcpkgs/$pkgname
+          mkdir -p void-packages/srcpkgs/$pkgname
+          cp "$pkgdir/template" void-packages/srcpkgs/$pkgname/
+          chown -R builder:builder void-packages/srcpkgs/$pkgname
 
-          sudo -Eu builder sh -c "cd /void-packages && ./xbps-src -E pkg $pkgname"
+          sudo -Eu builder sh -c "cd void-packages && ./xbps-src -E pkg $pkgname"
 
-          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \;
-          find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \; 2>/dev/null || true
+          find void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \;
+          find void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \; 2>/dev/null || true
 
           echo "Built packages:"
           ls -lh /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/*.xbps 2>/dev/null || echo "No packages found"
