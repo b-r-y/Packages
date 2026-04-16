@@ -303,7 +303,7 @@ steps:
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
-        xbps-install -y sudo bash curl git libstdc++ proot
+        xbps-install -y sudo bash curl git libstdc++ proot bwrap
         useradd -G xbuilder -M builder 2>/dev/null || true
 
         VOID_DIR=/woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void
@@ -316,7 +316,7 @@ steps:
 
         cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
         echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
-        echo XBPS_CHROOT_CMD=ethereal >> etc/conf
+        echo XBPS_CHROOT_CMD=bwrap >> etc/conf
         echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
 
         cp -r "$VOID_DIR"/* srcpkgs/
@@ -385,7 +385,7 @@ steps:
           cp "$pkgdir/template" /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/srcpkgs/$pkgname/
           chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/srcpkgs/$pkgname
 
-          cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages && ./xbps-src -m / -E pkg $pkgname
+          sudo -Eu builder sh -c "cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages && ./xbps-src -E pkg $pkgname"
 
           find /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \;
           find /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/ \; 2>/dev/null || true
