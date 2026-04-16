@@ -316,7 +316,7 @@ steps:
 
         cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
         echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
-        echo XBPS_CHROOT_CMD=proot >> etc/conf
+        echo XBPS_CHROOT_CMD=unchroot >> etc/conf
         echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
 
         cp -r "$VOID_DIR"/* srcpkgs/
