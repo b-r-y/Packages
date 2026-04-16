@@ -31,8 +31,10 @@ steps:
     privileged: true
     depends_on: [clone-arch]
     environment:
-      - GPG_PRIVATE_KEY
-      - GPG_PASSPHRASE
+      GPG_PRIVATE_KEY:
+        from_secret: GPG_PRIVATE_KEY
+      GPG_PASSPHRASE:
+        from_secret: GPG_PASSPHRASE
     commands:
       - |
         printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
@@ -101,8 +103,10 @@ steps:
     depends_on: [build-arch]
     when:
       - status: [success, failure]
+        
     environment:
-      - CODEBERG_TOKEN
+      CODEBERG_TOKEN:
+        from_secret: CODEBERG_TOKEN
     commands:
       - |
         printf '\033[1;34m==> Stage: Sync Arch packages to repo\033[0m\n'
@@ -200,7 +204,8 @@ steps:
     privileged: true
     depends_on: [clone-fedora]
     environment:
-      - GPG_PRIVATE_KEY
+      GPG_PRIVATE_KEY:
+        from_secret: GPG_PRIVATE_KEY
     commands:
       - |
         printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
@@ -487,8 +492,10 @@ steps:
     when:
       - status: [success, failure]
     environment:
-      - CODEBERG_TOKEN
-      - XBPS_PRIVATE_KEY
+      CODEBERG_TOKEN:
+        from_secret: CODEBERG_TOKEN
+      XBPS_PRIVATE_KEY:
+        from_secret: XBPS_PRIVATE_KEY
     commands:
       - |
         printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
