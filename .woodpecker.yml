@@ -320,7 +320,7 @@ steps:
         echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
 
         cp -r "$VOID_DIR"/* srcpkgs/
-        chown -R builder:builder /void-packages
+        chown -R builder:builder void-packages
 
         sudo -Eu builder ./xbps-src binary-bootstrap
 
