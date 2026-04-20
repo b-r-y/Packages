@@ -298,7 +298,6 @@ steps:
         set -eu
         printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
-        sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
         xbps-install -y bash curl git libstdc++ jq shadow
 
@@ -323,6 +322,14 @@ steps:
         cp -r "$VOID_DIR"/* srcpkgs/
 
         chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
+
+        # binary-bootstrap is still required so xbps-src can populate the
+        # masterdir metadata it expects, but this does not require a
+        # privileged container on its own.
+        su builder -s /bin/bash -c "
+          cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
+          ./xbps-src binary-bootstrap
+        "
 
         # Register our custom repository on the host so xbps-src -N can
         # resolve dependencies without relying on a chroot helper.
@@ -411,7 +418,6 @@ steps:
         printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
         set -eu
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
-        sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
         xbps-install -y git
         mkdir -p /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void
