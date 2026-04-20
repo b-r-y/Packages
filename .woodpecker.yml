@@ -49,7 +49,7 @@ steps:
           [[ "$pkgname" == _* ]] && continue
           [ -f "$pkgdir/PKGBUILD" ] || continue
 
-          if [ -n "$CI_PIPELINE_VARS_SKIP_PACKAGES" ]; then
+          if [ -n "${CI_PIPELINE_VARS_SKIP_PACKAGES:-}" ]; then
             echo ",$CI_PIPELINE_VARS_SKIP_PACKAGES," | grep -q ",$pkgname," && {
               echo "Skipping $pkgname (skip list)"
               continue
@@ -295,7 +295,7 @@ steps:
     depends_on: [clone-repos]
     commands:
       - |
-        set -euo pipefail
+        set -eu
         printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
@@ -364,7 +364,7 @@ steps:
           case "$pkgname" in _*) echo "Skipping $pkgname"; continue ;; esac
           [ -f "$pkgdir/template" ] || continue
 
-          if [ -n "$CI_PIPELINE_VARS_SKIP_PACKAGES" ]; then
+          if [ -n "${CI_PIPELINE_VARS_SKIP_PACKAGES:-}" ]; then
             echo ",$CI_PIPELINE_VARS_SKIP_PACKAGES," | grep -q ",$pkgname," && {
               echo "Skipping $pkgname (skip list)"
               continue
@@ -409,8 +409,7 @@ steps:
     commands:
       - |
         printf '\033[1;34m==> Stage: Sync Void packages to repo\033[0m\n'
-        set -euo pipefail
-        shopt -s nullglob
+        set -eu
         mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
         sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
         xbps-install -Syu xbps
@@ -427,14 +426,21 @@ steps:
           printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
         }
 
+        found_void_pkg=false
         for pkg in /woodpecker/src/codeberg.org/UniversalRepository/Packages/packages/void/*.xbps; do
+          [ -e "$pkg" ] || continue
+          found_void_pkg=true
           pkgfile=$(basename "$pkg")
-          IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
+          IFS='|' set -- $(parse_void_pkg "$pkgfile")
+          name="$1"
+          verrev="$2"
           skip_copy=false
 
           for existing in /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/*.xbps; do
             existing_file=$(basename "$existing")
-            IFS='|' read -r existing_name existing_verrev _ <<< "$(parse_void_pkg "$existing_file")"
+            IFS='|' set -- $(parse_void_pkg "$existing_file")
+            existing_name="$1"
+            existing_verrev="$2"
             [ "$existing_name" = "$name" ] || continue
             if [ "$existing_verrev" = "$verrev" ]; then
               echo "Void: $pkgfile already present ($verrev), skipping"
@@ -452,11 +458,11 @@ steps:
           fi
         done
 
-        if ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/*.xbps 1>/dev/null 2>&1; then
+        if [ "$found_void_pkg" = true ] && ls /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void/*.xbps 1>/dev/null 2>&1; then
           cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/repo/void
           XBPS_ARCH=x86_64 xbps-rindex -a *.xbps
 
-          if [ -n "$XBPS_PRIVATE_KEY" ]; then
+          if [ -n "${XBPS_PRIVATE_KEY:-}" ]; then
             echo "Signing Void packages..."
             mkdir -p /tmp/xbps-sign
             printf '%s\n' "$XBPS_PRIVATE_KEY" > /tmp/xbps-sign/id_rsa
