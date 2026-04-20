@@ -317,8 +317,6 @@ steps:
         cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
 
         cat >> etc/conf <<'CONF'
-        XBPS_BUILD_ENVIRONMENT=void-packages-ci
-        XBPS_CHROOT_CMD=uunshare
         XBPS_ALLOW_RESTRICTED=yes
         CONF
 
@@ -326,34 +324,15 @@ steps:
 
         chown -R builder:builder /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
 
-        # Void can build without privileged containers by using uunshare.
-        # If the runner disables unprivileged user namespaces entirely, fail
-        # early with a clear message instead of a generic xbps-src error.
-        su builder -s /bin/bash -c '
-          if ! command -v uunshare >/dev/null 2>&1; then
-            echo "uunshare is unavailable in this build image."
-            echo "Available chroot helpers need to include uunshare, uchroot, ethereal or bwrap."
-            exit 1
-          fi
-          if ! uunshare true >/dev/null 2>&1; then
-            echo "uunshare is present but unusable on this runner."
-            echo "This pipeline does not require privileged mode, but it does require unprivileged user namespaces."
-            exit 1
-          fi
-        '
-
-        su builder -s /bin/bash -c "./xbps-src binary-bootstrap"
-
-        # Register our custom repository inside the masterdir so dependencies
-        # built earlier in the same run are visible to subsequent builds.
-        mkdir -p masterdir-x86_64/etc/xbps.d
-        cat > masterdir-x86_64/etc/xbps.d/urepo.conf <<'EOF'
+        # Register our custom repository on the host so xbps-src -N can
+        # resolve dependencies without relying on a chroot helper.
+        cat > /etc/xbps.d/urepo.conf <<'EOF'
         repository=https://universalrepo.r1xelelo.workers.dev/void
         EOF
 
         # Trust key for our custom repo
-        mkdir -p masterdir-x86_64/var/db/xbps/keys
-        cat > masterdir-x86_64/var/db/xbps/keys/71:17:77:eb:82:c2:02:b6:8d:98:05:8d:19:9c:d5:1e.plist <<'PLIST'
+        mkdir -p /var/db/xbps/keys
+        cat > /var/db/xbps/keys/71:17:77:eb:82:c2:02:b6:8d:98:05:8d:19:9c:d5:1e.plist <<'PLIST'
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -409,7 +388,7 @@ steps:
 
           su builder -s /bin/bash -c "
             cd /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages
-            ./xbps-src -E pkg $pkgname
+            ./xbps-src -NE pkg $pkgname
           "
 
           find /woodpecker/src/codeberg.org/UniversalRepository/Packages/void-packages/hostdir/binpkgs \
