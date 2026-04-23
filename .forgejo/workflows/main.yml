@@ -1,22 +1,29 @@
 name: OS Build Dispatcher
 
-	jobs:
-	  trigger-build:
-	    runs-on: codeberg-small
-	    steps:
-	      - name: Trigger GitHub workflow for all packages
-	        run: |
-	          COMMIT_MESSAGE='${{ forgejo.event.head_commit.message }}'
-	          COMMIT_SHA='${{ forgejo.sha }}'
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'void/**'
+      - 'arch/**'
+      - 'fedora/**'
 
-	          ESCAPED_COMMIT_MESSAGE=${COMMIT_MESSAGE//\\/\\\\}
-	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//\"/\\\"}
-	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\n'/\\n}
-	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\r'/\\r}
-	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\t'/\\t}
-
-	          curl -X POST \
-	            -H "Accept: application/vnd.github.v3+json" \
-	            -H "Authorization: token ${{ secrets.GITHUBTOKEN }}" \
-	            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
-	            -d "{\"event_type\":\"build-arch\",\"client_payload\":{\"commit_message\":\"${ESCAPED_COMMIT_MESSAGE}\",\"commit_sha\":\"${COMMIT_SHA}\"}}"
+jobs:
+  trigger-build:
+    runs-on: codeberg-small
+    steps:
+      - name: Trigger GitHub workflow for all packages
+        run: |
+          COMMIT_MESSAGE='${{ forgejo.event.head_commit.message }}'
+          COMMIT_SHA='${{ forgejo.sha }}'
+          ESCAPED_COMMIT_MESSAGE=${COMMIT_MESSAGE//\\/\\\\}
+          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//\"/\\\"}
+          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\n'/\\n}
+          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\r'/\\r}
+          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\t'/\\t}
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUBTOKEN }}" \
+            https://api.github.com/repos/rXelelo/codeberg-builder/dispatches \
+            -d "{\"event_type\":\"build-arch\",\"client_payload\":{\"commit_message\":\"${ESCAPED_COMMIT_MESSAGE}\",\"commit_sha\":\"${COMMIT_SHA}\"}}"
