@@ -29,7 +29,7 @@ pre_build() {
 		sed -i 's/\([a-zA-Z_.]*\)\.append_range(\(.*\));/{ auto _r = \2; \1.insert(\1.end(), _r.begin(), _r.end()); }/g' {} +
 }
 
-do_build() {
+pre_configure() {
 	if [ "$build_option_clang" ]; then
 		export CC=clang
 		export CXX=clang++
