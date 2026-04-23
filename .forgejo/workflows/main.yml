@@ -1,5 +1,5 @@
 name: OS Build Dispatcher
-	
+
 	jobs:
 	  trigger-build:
 	    runs-on: codeberg-small
@@ -8,13 +8,13 @@ name: OS Build Dispatcher
 	        run: |
 	          COMMIT_MESSAGE='${{ forgejo.event.head_commit.message }}'
 	          COMMIT_SHA='${{ forgejo.sha }}'
-	
+
 	          ESCAPED_COMMIT_MESSAGE=${COMMIT_MESSAGE//\\/\\\\}
 	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//\"/\\\"}
 	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\n'/\\n}
 	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\r'/\\r}
 	          ESCAPED_COMMIT_MESSAGE=${ESCAPED_COMMIT_MESSAGE//$'\t'/\\t}
-	
+
 	          curl -X POST \
 	            -H "Accept: application/vnd.github.v3+json" \
 	            -H "Authorization: token ${{ secrets.GITHUBTOKEN }}" \
