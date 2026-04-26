@@ -10,10 +10,10 @@ homepage="https://jqlang.github.io/jq/"
 depends="glibc oniguruma" 
 
 distfiles="https://github.com/jqlang/jq/releases/download/jq-$version/jq-linux-amd64"
+skip_extraction="jq-linux-amd64"
 checksum=020468de7539ce70ef1bceaf7cde2e8c4f2ca6c3afb84642aabc5c97d9fc2a0d
 
 do_install() {
-    vmkdir /usr/bin
-    mv ${wrksrc}/jq-linux-amd64 ${wrksrc}/jq
-    vcopy ${wrksrc}/jq opt/bin/
+    vbin ${XBPS_SRCDISTDIR}/${pkgname}-${version}/jq-linux-amd64 jq
 }
+
