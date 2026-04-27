@@ -35,6 +35,8 @@ makedepends="
  pam-devel
  libwebp-devel
  basu-devel
+ libcurl-devel
+ sdbus-cpp
 "
  
 depends="
