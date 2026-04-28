@@ -1,10 +1,10 @@
-# this template for 'noctalia-v5'
-pkgname=noctalia-v5
+# this template for 'noctalia'
+pkgname=noctalia
 version=5.0.0
 revision=1
  
 build_style=meson
-configure_args="-Dbuildtype=release"
+#configure_args="-Dbuildtype=release"
  
 short_desc="Noctalia desktop shell"
 maintainer="Noctalia <team@enoctalia.dev>"
@@ -13,7 +13,7 @@ homepage="https://github.com/noctalia-dev/noctalia-shell"
  
 _branch=v5
 distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/refs/heads/${_branch}.tar.gz"
-checksum=SKIP
+checksum=413bab4604f16eb73f2733e2feea7eb32ea832722baf524babf70b7236408220
 wrksrc="${pkgname}-${_branch#v}"
  
 hostmakedepends="meson ninja pkg-config"
@@ -31,7 +31,7 @@ makedepends="
  harfbuzz-devel
  libxkbcommon-devel
  pipewire-devel
- curl-devel
+ libcurl-devel
  pam-devel
  libwebp-devel
  basu-devel
