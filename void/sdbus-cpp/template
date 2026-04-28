@@ -18,7 +18,7 @@ homepage="https://github.com/Kistler-Group/sdbus-cpp"
 distfiles="https://github.com/Kistler-Group/sdbus-cpp/archive/v${version}.tar.gz"
 checksum=da69a0104beb6e51415a59f1571a47beb1eacc65cc6027b250eb1cf13ff4f802
 
-sdbus-c++-devel_package() {
+sdbus-cpp-devel_package() {
 	depends="${sourcepkg}>=${version}_${revision}"
 	short_desc+=" - development files"
 	pkg_install() {
