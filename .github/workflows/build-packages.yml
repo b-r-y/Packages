@@ -20,6 +20,9 @@ on:
 
 run-name: ${{ github.event.head_commit.message || github.ref_name }}
 
+permissions:
+  contents: write
+
 jobs:
   build-arch:
     runs-on: ubuntu-latest
