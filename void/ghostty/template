@@ -2,16 +2,9 @@
 pkgname=ghostty
 version=1.3.1
 revision=1
-build_style=zig-build
-configure_args="
- -Doptimize=ReleaseFast
- -Dpie
- -Dversion-string=${version}
- -fsys=freetype
- -fsys=fontconfig
- -fsys=harfbuzz"
-hostmakedepends="pkg-config glib-devel pandoc gettext blueprint-compiler"
-makedepends="fontconfig-devel freetype-devel harfbuzz-devel gtk4-devel libadwaita-devel gtk4-layer-shell-devel zig15.2"
+build_style=gnu-configure
+hostmakedepends="pkg-config glib-devel pandoc gettext blueprint-compiler zig15.2"
+makedepends="fontconfig-devel freetype-devel harfbuzz-devel gtk4-devel libadwaita-devel gtk4-layer-shell-devel"
 depends="ghostty-terminfo-${version}_${revision}"
 short_desc="Fast and feature-rich terminal emulator that uses GPU acceleration"
 maintainer="Duncaen <duncaen@voidlinux.org>"
@@ -23,6 +16,33 @@ checksum=265837d3026b433f0e6b4e49d43153b915b0a19513f7edd8a8e693c559bd415b
 case "${XBPS_TARGET_MACHINE}" in
 	armv*) broken="src/apprt/gtk/cgroup.zig:70:14: error: expected type 'usize', found 'u64'" ;;
 esac
+
+do_configure() {
+	:
+}
+
+do_build() {
+	zig build \
+		-Doptimize=ReleaseFast \
+		-Dpie \
+		-Dversion-string=${version} \
+		-fsys=freetype \
+		-fsys=fontconfig \
+		-fsys=harfbuzz \
+		--prefix /usr
+}
+
+do_install() {
+	zig build install \
+		-Doptimize=ReleaseFast \
+		-Dpie \
+		-Dversion-string=${version} \
+		-fsys=freetype \
+		-fsys=fontconfig \
+		-fsys=harfbuzz \
+		--prefix /usr \
+		--destdir ${DESTDIR}
+}
 
 
 post_install() {

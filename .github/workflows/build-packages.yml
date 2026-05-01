@@ -399,11 +399,16 @@ jobs:
           cd repodata
           for file in *; do
             [ -f "$file" ] || continue
-            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "repodata-$file" --clobber < "$file"
+            cp "$file" "../repodata-$file"
+          done
+          cd /tmp/built-packages
+          for file in repodata-*; do
+            [ -f "$file" ] || continue
+            echo "Uploading $file"
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$file" --clobber
           done
           
           # Create a tarball of repodata for easier download
-          cd /tmp/built-packages
           tar czf repodata.tar.gz repodata/
           gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" repodata.tar.gz --clobber
           
