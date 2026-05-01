@@ -28,8 +28,7 @@ do_build() {
 		-Dversion-string=${version} \
 		-fsys=freetype \
 		-fsys=fontconfig \
-		-fsys=harfbuzz \
-		--prefix /usr
+		-fsys=harfbuzz
 }
 
 do_install() {
@@ -40,8 +39,7 @@ do_install() {
 		-fsys=freetype \
 		-fsys=fontconfig \
 		-fsys=harfbuzz \
-		--prefix /usr \
-		--destdir ${DESTDIR}
+		--prefix ${DESTDIR}/usr
 }
 
 
