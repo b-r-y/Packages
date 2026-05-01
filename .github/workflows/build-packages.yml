@@ -130,7 +130,10 @@ jobs:
             exit 0
           fi
           
-          pacman -Syu --noconfirm github-cli
+          pacman -Syu --noconfirm github-cli git
+          
+          # Fix git ownership issue in GitHub Actions
+          git config --global --add safe.directory /__w/Packages/Packages
           
           RELEASE_TAG="arch-repo"
           RELEASE_NAME="Arch Linux Repository"
@@ -326,7 +329,7 @@ jobs:
           fi
           
           dnf install -y 'dnf-command(config-manager)'
-          dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+          dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
           dnf install -y gh
           
           RELEASE_TAG="fedora-repo"
@@ -543,7 +546,10 @@ jobs:
             exit 0
           fi
           
-          xbps-install -y github-cli
+          xbps-install -y github-cli git
+          
+          # Fix git ownership issue in GitHub Actions
+          git config --global --add safe.directory /__w/Packages/Packages
           
           RELEASE_TAG="void-repo"
           RELEASE_NAME="Void Linux Repository"
