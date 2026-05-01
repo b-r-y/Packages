@@ -40,7 +40,7 @@ jobs:
           SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
           SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
 
-          pacman -Syu --noconfirm gnupg sudo
+          pacman -Syu --noconfirm gnupg sudo github-cli
           cd arch
           useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           
@@ -62,6 +62,13 @@ jobs:
             # Extract version and revision from PKGBUILD
             source "$pkgdir/PKGBUILD"
             pkgver_full="${pkgname}-${pkgver}-${pkgrel}"
+            
+            # Check if package already exists in release
+            if gh -R "$GITHUB_REPOSITORY" release view arch-repo --json assets --jq '.assets[].name' 2>/dev/null | grep -q "^${pkgname}-${pkgver}-${pkgrel}-.*\.pkg\.tar\.zst$"; then
+              echo "Package $pkgver_full already exists in release, skipping"
+              cd ..
+              continue
+            fi
             
             echo "Building Arch package: $pkgver_full"
             cd "$pkgdir"
@@ -223,6 +230,12 @@ jobs:
           SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
 
           dnf install -y rpm-build rpmdevtools dnf-plugins-core rpm-sign gnupg2 pinentry sudo spectool createrepo_c
+          
+          # Install gh CLI
+          dnf install -y 'dnf-command(config-manager)'
+          dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
+          dnf install -y gh
+          
           FEDORA_DIR=$(pwd)/fedora
           cd "$FEDORA_DIR"
           useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -254,6 +267,12 @@ jobs:
                 echo "Package $specname is in skip list, skipping"
                 continue
               }
+            fi
+            
+            # Check if package already exists in release
+            if gh -R "$GITHUB_REPOSITORY" release view fedora-repo --json assets --jq '.assets[].name' 2>/dev/null | grep -q "^${specname}-${pkgver}-${pkgrel}\.fc.*\.x86_64\.rpm$"; then
+              echo "Package $pkgver_full already exists in release, skipping"
+              continue
             fi
             
             echo "Building Fedora package from: $pkgver_full"
@@ -459,6 +478,9 @@ jobs:
           xbps-install -S
           sudo -Eu builder xbps-install -r /void-packages/masterdir-x86_64 jq curl -y
           
+          # Install gh CLI
+          xbps-install -y github-cli
+          
           # Merge custom shlibs
           sudo -Eu builder bash -c '
           while IFS= read -r line; do
@@ -490,6 +512,12 @@ jobs:
             version=$(grep '^version=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
             revision=$(grep '^revision=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
             pkgver_full="${pkgname}-${version}_${revision}"
+            
+            # Check if package already exists in release
+            if gh -R "$GITHUB_REPOSITORY" release view void-repo --json assets --jq '.assets[].name' 2>/dev/null | grep -q "^${pkgname}-${version}_${revision}.*\.xbps$"; then
+              echo "Package $pkgver_full already exists in release, skipping"
+              continue
+            fi
             
             echo "Building Void package: $pkgver_full"
             
