@@ -1,0 +1,616 @@
+name: Build All Packages
+
+on:
+  push:
+    paths:
+      - 'arch/**'
+      - 'fedora/**'
+      - 'void/**'
+  workflow_dispatch:
+    inputs:
+      skip_packages:
+        description: 'Optional comma-separated package names to skip (without leading underscore)'
+        required: false
+        default: ''
+      skip_if_in_other_repos:
+        description: 'Skip package build if same package exists in other distro repos'
+        required: false
+        type: boolean
+        default: false
+
+run-name: ${{ github.event.head_commit.message || github.ref_name }}
+
+jobs:
+  build-arch:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Arch packages
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Build Arch packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          pacman -Syu --noconfirm gnupg sudo
+          cd arch
+          useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          
+          mkdir -p /tmp/built-packages
+          
+          for pkgdir in */; do
+            pkgname=$(basename "$pkgdir")
+            [[ "$pkgname" == _* ]] && continue
+            [ -f "$pkgdir/PKGBUILD" ] || continue
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$pkgname," && {
+                echo "Package $pkgname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            # Extract version and revision from PKGBUILD
+            source "$pkgdir/PKGBUILD"
+            pkgver_full="${pkgname}-${pkgver}-${pkgrel}"
+            
+            echo "Building Arch package: $pkgver_full"
+            cd "$pkgdir"
+            chown -R builder:builder .
+            
+            # Enable loopback for GPG
+            su builder -c "mkdir -p ~/.gnupg && echo \"allow-loopback-pinentry\" > ~/.gnupg/gpg-agent.conf"
+            su builder -c "echo \"pinentry-mode loopback\" > ~/.gnupg/gpg.conf"
+            
+            # Import Key if provided
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              echo "${{ secrets.GPG_PRIVATE_KEY }}" | su builder -c "gpg --batch --import"
+            fi
+            
+            # Build
+            su builder -c "makepkg -sf --noconfirm"
+            
+            # Sign packages if GPG key is available
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              for pkg in *.pkg.tar.zst; do
+                [[ "$pkg" == *"-debug-"* ]] && continue
+                [ -f "$pkg" ] || continue
+                echo "Signing $pkg..."
+                echo "${{ secrets.GPG_PASSPHRASE }}" | su builder -c "gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign $pkg"
+              done
+            fi
+            
+            # Copy built packages to temp directory
+            cp *.pkg.tar.zst /tmp/built-packages/ 2>/dev/null || true
+            cp *.pkg.tar.zst.sig /tmp/built-packages/ 2>/dev/null || true
+            
+            cd ..
+            echo "Built packages in $pkgdir:"
+            ls -lh "$pkgdir"/*.pkg.tar.zst 2>/dev/null || echo "No packages found"
+          done
+          
+          echo "All built packages:"
+          ls -lh /tmp/built-packages/
+      
+      - name: Create Arch repository database
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Create Arch repository database\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.pkg.tar.zst 1>/dev/null 2>&1; then
+            echo "No Arch packages built, skipping"
+            exit 0
+          fi
+          
+          cd /tmp/built-packages
+          repo-add universal-repo.db.tar.gz *.pkg.tar.zst
+          ln -sf universal-repo.db.tar.gz universal-repo.db
+          ln -sf universal-repo.files.tar.gz universal-repo.files
+          
+          echo "Repository database created"
+          ls -lh
+      
+      - name: Upload Arch packages to release
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '\033[1;34m==> Stage: Upload Arch packages to release\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.pkg.tar.zst 1>/dev/null 2>&1; then
+            echo "No Arch packages to upload"
+            exit 0
+          fi
+          
+          pacman -Syu --noconfirm github-cli
+          
+          RELEASE_TAG="arch-repo"
+          RELEASE_NAME="Arch Linux Repository"
+          
+          # Check if release exists
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists"
+          else
+            echo "Creating release $RELEASE_TAG"
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Arch Linux packages repository. Updated automatically by CI." \
+              --prerelease
+          fi
+          
+          cd /tmp/built-packages
+          
+          # Parse package name and version from filename
+          parse_arch_pkg() {
+            local file="$1"
+            local base arch rel ver name tmp
+            base="${file%.pkg.tar.zst}"
+            arch="${base##*-}"
+            tmp="${base%-*}"
+            rel="${tmp##*-}"
+            tmp="${tmp%-*}"
+            ver="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
+          }
+          
+          # Delete old versions of packages from release
+          for pkg in *.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrel _ <<< "$(parse_arch_pkg "$pkgfile")"
+            
+            # List all assets and delete old versions of this package
+            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+              if [[ "$asset" == "${name}-"*.pkg.tar.zst* ]]; then
+                IFS='|' read -r asset_name asset_verrel _ <<< "$(parse_arch_pkg "$asset")"
+                if [ "$asset_name" = "$name" ] && [ "$asset_verrel" != "$verrel" ]; then
+                  echo "Deleting old version: $asset"
+                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                fi
+              fi
+            done
+          done
+          
+          # Upload new packages and signatures
+          for pkg in *.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            echo "Uploading $pkg"
+            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+            if [ -f "$pkg.sig" ]; then
+              echo "Uploading $pkg.sig"
+              gh release upload "$RELEASE_TAG" "$pkg.sig" --clobber
+            fi
+          done
+          
+          # Upload repository database files
+          echo "Uploading repository database"
+          gh release upload "$RELEASE_TAG" universal-repo.db.tar.gz --clobber
+          gh release upload "$RELEASE_TAG" universal-repo.files.tar.gz --clobber
+          gh release upload "$RELEASE_TAG" universal-repo.db --clobber
+          gh release upload "$RELEASE_TAG" universal-repo.files --clobber
+          
+          echo "Arch packages uploaded successfully"
+
+  build-fedora:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Fedora packages
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Build Fedora packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          dnf install -y rpm-build rpmdevtools dnf-plugins-core rpm-sign gnupg2 pinentry sudo spectool createrepo_c
+          FEDORA_DIR=$(pwd)/fedora
+          cd "$FEDORA_DIR"
+          useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          
+          # Setup rpmbuild directory structure
+          rpmdev-setuptree
+          
+          mkdir -p /tmp/built-packages
+          
+          for spec in $(ls "$FEDORA_DIR"/*.spec 2>/dev/null | xargs -n1 basename); do
+            case "$(basename "$spec")" in
+              _*)
+                echo "Skipping $spec (starts with underscore)"
+                continue
+                ;;
+            esac
+            spec_path="$FEDORA_DIR/$spec"
+            [ -f "$spec_path" ] || continue
+            
+            # Extract version and release from spec file
+            specname=$(basename "$spec" .spec)
+            pkgver=$(grep "^Version:" "$spec_path" | awk '{print $2}')
+            pkgrel=$(grep "^Release:" "$spec_path" | awk '{print $2}' | cut -d'%' -f1)
+            pkgver_full="${specname}-${pkgver}-${pkgrel}"
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$specname," && {
+                echo "Package $specname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            echo "Building Fedora package from: $pkgver_full"
+            
+            # Clean build directories for this build (but keep RPMS/SRPMS)
+            rm -rf ~/rpmbuild/BUILD/* ~/rpmbuild/BUILDROOT/*
+            
+            # Setup GPG if key is provided
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+              echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+              GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk "{print \$2}" | cut -d"/" -f2 | head -1)
+              
+              # Configure RPM to use GPG
+              echo "%_signature gpg" >> ~/.rpmmacros
+              echo "%_gpg_name $GPG_KEY_ID" >> ~/.rpmmacros
+            fi
+            
+            # Copy spec file
+            cp "$spec_path" ~/rpmbuild/SPECS/
+            
+            # Copy sources if they exist locally
+            [ -d sources ] && cp sources/* ~/rpmbuild/SOURCES/ || true
+            
+            # Download sources using spectool
+            cd ~/rpmbuild/SPECS
+            spectool -g -R "$spec" || true
+            
+            # Install build dependencies
+            dnf builddep -y "$spec"
+            
+            # Build packages
+            rpmbuild -ba "$spec"
+
+            # Return to Fedora specs directory for next iteration
+            cd "$FEDORA_DIR"
+            
+            # Copy built packages to temp directory
+            cp ~/rpmbuild/RPMS/*/*.rpm /tmp/built-packages/ 2>/dev/null || true
+            cp ~/rpmbuild/SRPMS/*.rpm /tmp/built-packages/ 2>/dev/null || true
+            
+            echo "Built packages:"
+            ls -lh /tmp/built-packages/*.rpm 2>/dev/null || echo "No packages found"
+          done
+          
+          echo "All built packages:"
+          ls -lh /tmp/built-packages/
+      
+      - name: Create Fedora repository metadata
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Create Fedora repository metadata\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.rpm 1>/dev/null 2>&1; then
+            echo "No Fedora packages built, skipping"
+            exit 0
+          fi
+          
+          cd /tmp/built-packages
+          createrepo_c .
+          
+          echo "Repository metadata created"
+          ls -lh repodata/
+      
+      - name: Upload Fedora packages to release
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '\033[1;34m==> Stage: Upload Fedora packages to release\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.rpm 1>/dev/null 2>&1; then
+            echo "No Fedora packages to upload"
+            exit 0
+          fi
+          
+          dnf install -y 'dnf-command(config-manager)'
+          dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+          dnf install -y gh
+          
+          RELEASE_TAG="fedora-repo"
+          RELEASE_NAME="Fedora Repository"
+          
+          # Check if release exists
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists"
+          else
+            echo "Creating release $RELEASE_TAG"
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Fedora packages repository. Updated automatically by CI." \
+              --prerelease
+          fi
+          
+          cd /tmp/built-packages
+          
+          # Parse package name and version from filename
+          parse_fedora_pkg() {
+            local file="$1"
+            local base arch rel ver name tmp
+            base="${file%.rpm}"
+            arch="${base##*.}"
+            tmp="${base%.*}"
+            rel="${tmp##*-}"
+            tmp="${tmp%-*}"
+            ver="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s-%s|%s\n' "$name" "$ver" "$rel" "$arch"
+          }
+          
+          # Delete old versions of packages from release
+          for pkg in *.rpm; do
+            [ -f "$pkg" ] || continue
+            [[ "$pkg" == *.src.rpm ]] && continue
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrel _ <<< "$(parse_fedora_pkg "$pkgfile")"
+            
+            # List all assets and delete old versions of this package
+            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+              if [[ "$asset" == "${name}-"*.rpm ]] && [[ "$asset" != *.src.rpm ]]; then
+                IFS='|' read -r asset_name asset_verrel _ <<< "$(parse_fedora_pkg "$asset")"
+                if [ "$asset_name" = "$name" ] && [ "$asset_verrel" != "$verrel" ]; then
+                  echo "Deleting old version: $asset"
+                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                fi
+              fi
+            done
+          done
+          
+          # Upload new packages
+          for pkg in *.rpm; do
+            [ -f "$pkg" ] || continue
+            echo "Uploading $pkg"
+            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+          done
+          
+          # Upload repository metadata
+          echo "Uploading repository metadata"
+          cd repodata
+          for file in *; do
+            [ -f "$file" ] || continue
+            gh release upload "$RELEASE_TAG" "repodata-$file" --clobber < "$file"
+          done
+          
+          # Create a tarball of repodata for easier download
+          cd /tmp/built-packages
+          tar czf repodata.tar.gz repodata/
+          gh release upload "$RELEASE_TAG" repodata.tar.gz --clobber
+          
+          echo "Fedora packages uploaded successfully"
+
+  build-void:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+      options: --privileged
+      volumes:
+        - /dev:/dev
+    steps:
+      - name: Prepare container
+        run: |
+          printf '\033[1;34m==> Stage: Prepare container (Void)\033[0m\n'
+          mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
+          sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
+          xbps-install -Syu xbps
+          xbps-install -y sudo bash curl git libstdc++
+          useradd -G xbuilder -M builder
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Void packages
+        run: |
+          printf '\033[1;34m==> Stage: Build Void packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          VOID_DIR=$(pwd)/void
+          
+          git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
+          for pkg in ghostty-terminfo ghostty zig llvm22; do
+            rm -rf /void-packages/srcpkgs/$pkg
+          done
+          cd /void-packages
+          echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
+          echo XBPS_CHROOT_CMD=uchroot >> etc/conf
+          echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+                    
+          cp -r "$VOID_DIR"/* srcpkgs/
+          
+          chown -R builder:builder /void-packages
+          sudo -Eu builder ./xbps-src binary-bootstrap
+          
+          xbps-install -S
+          sudo -Eu builder xbps-install -r /void-packages/masterdir-x86_64 jq curl -y
+          
+          # Merge custom shlibs
+          sudo -Eu builder bash -c '
+          while IFS= read -r line; do
+              [[ -z "$line" ]] && continue
+              lib=$(echo "$line" | awk "{print \$1}")
+              base=$(echo "$lib" | sed "s/\.so\.[0-9]*$//")
+              sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
+              echo "$line" >> /void-packages/common/shlibs
+            done < '"$VOID_DIR"'/../common/shlibs
+          '
+          
+          mkdir -p /tmp/built-packages
+          
+          for pkgdir in "$VOID_DIR"/*; do
+            [ -d "$pkgdir" ] || continue
+            pkgname=$(basename "$pkgdir")
+            case "$pkgname" in _*) echo "Skipping $pkgname"; continue ;; esac
+            [ -f "$pkgdir/template" ] || continue
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$pkgname," && {
+                echo "Package $pkgname is in skip list, skipping"
+                continue
+              }
+            fi
+            
+            # Extract version and revision from template without sourcing
+            version=$(grep '^version=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            revision=$(grep '^revision=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            pkgver_full="${pkgname}-${version}_${revision}"
+            
+            echo "Building Void package: $pkgver_full"
+            
+            # Copy template to srcpkgs
+            mkdir -p /void-packages/srcpkgs/$pkgname
+            cp "$pkgdir/template" /void-packages/srcpkgs/$pkgname/
+            chown -R builder:builder /void-packages/srcpkgs/$pkgname
+            
+            # Build package
+            sudo -Eu builder sh -c "cd /void-packages && ./xbps-src -E pkg $pkgname"
+                        
+            # Copy built packages to temp directory
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /tmp/built-packages/ \;
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /tmp/built-packages/ \; 2>/dev/null || true
+            
+            echo "Built packages:"
+            ls -lh /tmp/built-packages/*.xbps 2>/dev/null || echo "No packages found"
+          done
+          
+          echo "All built packages:"
+          ls -lh /tmp/built-packages/
+      
+      - name: Create Void repository index
+        if: always()
+        shell: bash
+        run: |
+          printf '\033[1;34m==> Stage: Create Void repository index\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.xbps 1>/dev/null 2>&1; then
+            echo "No Void packages built, skipping"
+            exit 0
+          fi
+          
+          cd /tmp/built-packages
+          XBPS_ARCH=x86_64 xbps-rindex -a *.xbps
+
+          if [ -n "${{ secrets.XBPS_PRIVATE_KEY }}" ]; then
+            echo "Signing Void packages and repository metadata..."
+            mkdir -p /tmp/xbps-sign
+            printf '%s\n' "${{ secrets.XBPS_PRIVATE_KEY }}" > /tmp/xbps-sign/id_rsa
+            chmod 600 /tmp/xbps-sign/id_rsa
+
+            for p in *.xbps; do
+              xbps-rindex --privkey /tmp/xbps-sign/id_rsa -S "$p" || true
+            done
+            XBPS_ARCH=x86_64 xbps-rindex --signedby 'Universal Repository CI <ci@universalrepo.local>' --privkey /tmp/xbps-sign/id_rsa -s . || true
+            rm -rf /tmp/xbps-sign
+          else
+            echo "XBPS_PRIVATE_KEY secret not set; skipping Void package signing"
+          fi
+          
+          echo "Repository index created"
+          ls -lh
+      
+      - name: Upload Void packages to release
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '\033[1;34m==> Stage: Upload Void packages to release\033[0m\n'
+          
+          if ! ls /tmp/built-packages/*.xbps 1>/dev/null 2>&1; then
+            echo "No Void packages to upload"
+            exit 0
+          fi
+          
+          xbps-install -y github-cli
+          
+          RELEASE_TAG="void-repo"
+          RELEASE_NAME="Void Linux Repository"
+          
+          # Check if release exists
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists"
+          else
+            echo "Creating release $RELEASE_TAG"
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Void Linux packages repository. Updated automatically by CI." \
+              --prerelease
+          fi
+          
+          cd /tmp/built-packages
+          
+          # Parse package name and version from filename
+          parse_void_pkg() {
+            local file="$1"
+            local base arch verrev name tmp
+            base="${file%.xbps}"
+            arch="${base##*.}"
+            tmp="${base%.*}"
+            verrev="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
+          }
+          
+          # Delete old versions of packages from release
+          for pkg in *.xbps; do
+            [ -f "$pkg" ] || continue
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
+            
+            # List all assets and delete old versions of this package
+            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+              if [[ "$asset" == "${name}-"*.xbps* ]]; then
+                IFS='|' read -r asset_name asset_verrev _ <<< "$(parse_void_pkg "$asset")"
+                if [ "$asset_name" = "$name" ] && [ "$asset_verrev" != "$verrev" ]; then
+                  echo "Deleting old version: $asset"
+                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                fi
+              fi
+            done
+          done
+          
+          # Upload new packages and signatures
+          for pkg in *.xbps; do
+            [ -f "$pkg" ] || continue
+            echo "Uploading $pkg"
+            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+            if [ -f "$pkg.sig" ]; then
+              echo "Uploading $pkg.sig"
+              gh release upload "$RELEASE_TAG" "$pkg.sig" --clobber
+            fi
+            if [ -f "$pkg.sig2" ]; then
+              echo "Uploading $pkg.sig2"
+              gh release upload "$RELEASE_TAG" "$pkg.sig2" --clobber
+            fi
+          done
+          
+          # Upload repository index files
+          echo "Uploading repository index"
+          for idx in *-repodata; do
+            [ -f "$idx" ] || continue
+            gh release upload "$RELEASE_TAG" "$idx" --clobber
+          done
+          
+          echo "Void packages uploaded successfully"
