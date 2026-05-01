@@ -11,12 +11,7 @@ maintainer="Noctalia <team@enoctalia.dev>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
  
-_branch=v5
-distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/refs/heads/${_branch}.tar.gz"
-checksum=SKIP_HASH
-wrksrc="${pkgname}-${_branch#v}"
- 
-hostmakedepends="meson ninja pkg-config"
+hostmakedepends="meson ninja pkg-config git"
  
 makedepends="
  wayland-devel
@@ -37,6 +32,7 @@ makedepends="
  basu-devel
  libcurl-devel
  sdbus-c++-devel
+ polkit-devel
 "
  
 depends="
@@ -48,6 +44,10 @@ depends="
 "
  
 CXXFLAGS+=" -std=c++20"
+
+do_fetch() {
+        git clone https://github.com/noctalia-dev/noctalia-shell.git --branch v5 ${wrksrc}
+}
  
 post_install() {
         if [ -f LICENSE ]; then
