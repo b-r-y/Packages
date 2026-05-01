@@ -1,0 +1,22 @@
+# Template for 'zig15.2'
+pkgname=zig15.2
+version=0.15.2
+revision=1
+hostmakedepends="tar"
+short_desc="General-purpose programming language and toolchain"
+maintainer="Rain Xelelo <rxelelo@outlook.com>"
+license="MIT"
+homepage="https://ziglang.org"
+distfiles="https://ziglang.org/download/${version}/zig-x86_64-linux-${version}.tar.xz"
+checksum=02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
+conflicts="zig"
+
+post_install() {
+    vlicense LICENSE
+}
+
+do_install() {
+    vbin zig
+    vmkdir usr/lib/zig
+    vcopy lib/* usr/lib/zig/
+}

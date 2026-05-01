@@ -133,17 +133,17 @@ jobs:
           pacman -Syu --noconfirm github-cli git
           
           # Fix git ownership issue in GitHub Actions
-          git config --global --add safe.directory /__w/Packages/Packages
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           
           RELEASE_TAG="arch-repo"
           RELEASE_NAME="Arch Linux Repository"
           
-          # Check if release exists
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          # Check if release exists (run with -R flag)
+          if gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG exists"
           else
             echo "Creating release $RELEASE_TAG"
-            gh release create "$RELEASE_TAG" \
+            gh -R "$GITHUB_REPOSITORY" release create "$RELEASE_TAG" \
               --title "$RELEASE_NAME" \
               --notes "Arch Linux packages repository. Updated automatically by CI." \
               --prerelease
@@ -172,12 +172,12 @@ jobs:
             IFS='|' read -r name verrel _ <<< "$(parse_arch_pkg "$pkgfile")"
             
             # List all assets and delete old versions of this package
-            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+            gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
               if [[ "$asset" == "${name}-"*.pkg.tar.zst* ]]; then
                 IFS='|' read -r asset_name asset_verrel _ <<< "$(parse_arch_pkg "$asset")"
                 if [ "$asset_name" = "$name" ] && [ "$asset_verrel" != "$verrel" ]; then
                   echo "Deleting old version: $asset"
-                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                  gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
                 fi
               fi
             done
@@ -187,19 +187,19 @@ jobs:
           for pkg in *.pkg.tar.zst; do
             [ -f "$pkg" ] || continue
             echo "Uploading $pkg"
-            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg" --clobber
             if [ -f "$pkg.sig" ]; then
               echo "Uploading $pkg.sig"
-              gh release upload "$RELEASE_TAG" "$pkg.sig" --clobber
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig" --clobber
             fi
           done
           
           # Upload repository database files
           echo "Uploading repository database"
-          gh release upload "$RELEASE_TAG" universal-repo.db.tar.gz --clobber
-          gh release upload "$RELEASE_TAG" universal-repo.files.tar.gz --clobber
-          gh release upload "$RELEASE_TAG" universal-repo.db --clobber
-          gh release upload "$RELEASE_TAG" universal-repo.files --clobber
+          gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" universal-repo.db.tar.gz --clobber
+          gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" universal-repo.files.tar.gz --clobber
+          gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" universal-repo.db --clobber
+          gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" universal-repo.files --clobber
           
           echo "Arch packages uploaded successfully"
 
@@ -332,15 +332,18 @@ jobs:
           dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
           dnf install -y gh
           
+          # Fix git ownership issue in GitHub Actions
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          
           RELEASE_TAG="fedora-repo"
           RELEASE_NAME="Fedora Repository"
           
-          # Check if release exists
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          # Check if release exists (run from repo directory)
+          if gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG exists"
           else
             echo "Creating release $RELEASE_TAG"
-            gh release create "$RELEASE_TAG" \
+            gh -R "$GITHUB_REPOSITORY" release create "$RELEASE_TAG" \
               --title "$RELEASE_NAME" \
               --notes "Fedora packages repository. Updated automatically by CI." \
               --prerelease
@@ -370,12 +373,12 @@ jobs:
             IFS='|' read -r name verrel _ <<< "$(parse_fedora_pkg "$pkgfile")"
             
             # List all assets and delete old versions of this package
-            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+            gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
               if [[ "$asset" == "${name}-"*.rpm ]] && [[ "$asset" != *.src.rpm ]]; then
                 IFS='|' read -r asset_name asset_verrel _ <<< "$(parse_fedora_pkg "$asset")"
                 if [ "$asset_name" = "$name" ] && [ "$asset_verrel" != "$verrel" ]; then
                   echo "Deleting old version: $asset"
-                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                  gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
                 fi
               fi
             done
@@ -385,7 +388,7 @@ jobs:
           for pkg in *.rpm; do
             [ -f "$pkg" ] || continue
             echo "Uploading $pkg"
-            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg" --clobber
           done
           
           # Upload repository metadata
@@ -393,13 +396,13 @@ jobs:
           cd repodata
           for file in *; do
             [ -f "$file" ] || continue
-            gh release upload "$RELEASE_TAG" "repodata-$file" --clobber < "$file"
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "repodata-$file" --clobber < "$file"
           done
           
           # Create a tarball of repodata for easier download
           cd /tmp/built-packages
           tar czf repodata.tar.gz repodata/
-          gh release upload "$RELEASE_TAG" repodata.tar.gz --clobber
+          gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" repodata.tar.gz --clobber
           
           echo "Fedora packages uploaded successfully"
 
@@ -549,17 +552,17 @@ jobs:
           xbps-install -y github-cli git
           
           # Fix git ownership issue in GitHub Actions
-          git config --global --add safe.directory /__w/Packages/Packages
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           
           RELEASE_TAG="void-repo"
           RELEASE_NAME="Void Linux Repository"
           
-          # Check if release exists
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          # Check if release exists (run with -R flag)
+          if gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG exists"
           else
             echo "Creating release $RELEASE_TAG"
-            gh release create "$RELEASE_TAG" \
+            gh -R "$GITHUB_REPOSITORY" release create "$RELEASE_TAG" \
               --title "$RELEASE_NAME" \
               --notes "Void Linux packages repository. Updated automatically by CI." \
               --prerelease
@@ -586,12 +589,12 @@ jobs:
             IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
             
             # List all assets and delete old versions of this package
-            gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+            gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
               if [[ "$asset" == "${name}-"*.xbps* ]]; then
                 IFS='|' read -r asset_name asset_verrev _ <<< "$(parse_void_pkg "$asset")"
                 if [ "$asset_name" = "$name" ] && [ "$asset_verrev" != "$verrev" ]; then
                   echo "Deleting old version: $asset"
-                  gh release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                  gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
                 fi
               fi
             done
@@ -601,14 +604,14 @@ jobs:
           for pkg in *.xbps; do
             [ -f "$pkg" ] || continue
             echo "Uploading $pkg"
-            gh release upload "$RELEASE_TAG" "$pkg" --clobber
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg" --clobber
             if [ -f "$pkg.sig" ]; then
               echo "Uploading $pkg.sig"
-              gh release upload "$RELEASE_TAG" "$pkg.sig" --clobber
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig" --clobber
             fi
             if [ -f "$pkg.sig2" ]; then
               echo "Uploading $pkg.sig2"
-              gh release upload "$RELEASE_TAG" "$pkg.sig2" --clobber
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig2" --clobber
             fi
           done
           
@@ -616,7 +619,7 @@ jobs:
           echo "Uploading repository index"
           for idx in *-repodata; do
             [ -f "$idx" ] || continue
-            gh release upload "$RELEASE_TAG" "$idx" --clobber
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$idx" --clobber
           done
           
           echo "Void packages uploaded successfully"
