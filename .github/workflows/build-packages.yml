@@ -83,7 +83,6 @@ jobs:
             # Check if package already exists in release
             if grep -q "^${pkgname}-${pkgver}-${pkgrel}-.*\.pkg\.tar\.zst$" /tmp/existing-packages/arch-list.txt 2>/dev/null; then
               echo "Package $pkgver_full already exists in release, skipping"
-              cd ..
               continue
             fi
             
