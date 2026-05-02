@@ -1,8 +1,8 @@
 # this template for 'noctalia'
+
 pkgname=noctalia
 version=5.0.0
 revision=1
- 
 build_style=meson
 #configure_args="-Dbuildtype=release"
  
@@ -47,6 +47,11 @@ CXXFLAGS+=" -std=c++20"
 
 do_fetch() {
         git clone https://github.com/noctalia-dev/noctalia-shell.git --branch v5 ${wrksrc}
+
+        # Update revision
+        cd ${wrksrc}
+        SHA=$(git rev-parse --short HEAD)
+        revision+=".r$SHA"
 }
  
 post_install() {
