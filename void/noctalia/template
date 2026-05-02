@@ -1,11 +1,10 @@
 # this template for 'noctalia'
 MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/ref/heads/v5")
 SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
-REV=3
 
 pkgname=noctalia
-version=5.0.0
-revision="$REV.r$SHA"
+version=5.0.0.r$SHA
+revision=3
 build_style=meson
 #configure_args="-Dbuildtype=release"
  
