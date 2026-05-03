@@ -1,8 +1,8 @@
 # this template for 'noctalia'
 MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/ref/heads/v5")
 SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
-DATE=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/commits/$SHA" \
-  | jq -r '.commit.committer.date' | tr -d ':-' | cut -c1-8)
+DATE=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/commits/$SHA" \
+  | jq -r '.commit.committer.date' | tr -d 'T:-Z' | cut -c1-12)
 
 pkgname=noctalia
 version=5.0.0.r${DATE}.${SHA}
