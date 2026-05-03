@@ -603,6 +603,36 @@ jobs:
           cp /tmp/built-packages/*.xbps.sig "$WORK_DIR"/ 2>/dev/null || true
           cp /tmp/built-packages/*.xbps.sig2 "$WORK_DIR"/ 2>/dev/null || true
 
+          # Keep only newest built version per package in index input
+          # (remove older versions of packages that were rebuilt this run)
+          parse_void_pkg() {
+            local file="$1"
+            local base arch verrev name tmp
+            base="${file%.xbps}"
+            arch="${base##*.}"
+            tmp="${base%.*}"
+            verrev="${tmp##*-}"
+            name="${tmp%-*}"
+            printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
+          }
+
+          for newpkg in /tmp/built-packages/*.xbps; do
+            [ -f "$newpkg" ] || continue
+            newfile=$(basename "$newpkg")
+            IFS='|' read -r new_name new_verrev _ <<< "$(parse_void_pkg "$newfile")"
+
+            for existing in "$WORK_DIR"/*.xbps; do
+              [ -f "$existing" ] || continue
+              existing_file=$(basename "$existing")
+              IFS='|' read -r existing_name existing_verrev _ <<< "$(parse_void_pkg "$existing_file")"
+              [ "$existing_name" = "$new_name" ] || continue
+              [ "$existing_verrev" = "$new_verrev" ] && continue
+
+              echo "Void index: removing old $existing_file (replaced by $newfile)"
+              rm -f "$WORK_DIR/$existing_file" "$WORK_DIR/$existing_file.sig" "$WORK_DIR/$existing_file.sig2"
+            done
+          done
+
           if ! ls "$WORK_DIR"/*.xbps 1>/dev/null 2>&1; then
             echo "No Void packages available to index, skipping"
             exit 0
@@ -638,8 +668,8 @@ jobs:
           printf '\033[1;34m==> Stage: Upload Void packages to release\033[0m\n'
 
           WORK_DIR=/tmp/void-repo-packages
-          if ! ls "$WORK_DIR"/*.xbps 1>/dev/null 2>&1; then
-            echo "No Void packages to upload"
+          if ! ls /tmp/built-packages/*.xbps 1>/dev/null 2>&1; then
+            echo "No newly built Void packages to upload"
             exit 0
           fi
           
@@ -662,7 +692,7 @@ jobs:
               --prerelease
           fi
           
-          cd "$WORK_DIR"
+          cd /tmp/built-packages
           
           # Parse package name and version from filename
           parse_void_pkg() {
@@ -676,7 +706,7 @@ jobs:
             printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
           }
           
-          # Delete old versions of packages from release
+          # Delete old versions of rebuilt packages from release
           for pkg in *.xbps; do
             [ -f "$pkg" ] || continue
             pkgfile=$(basename "$pkg")
@@ -693,8 +723,16 @@ jobs:
               fi
             done
           done
+
+          # Remove old repository metadata assets before uploading fresh metadata
+          gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+            if [[ "$asset" == *-repodata ]]; then
+              echo "Deleting stale metadata asset: $asset"
+              gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
+            fi
+          done
           
-          # Upload new packages and signatures
+          # Upload only newly built packages and signatures
           for pkg in *.xbps; do
             [ -f "$pkg" ] || continue
             echo "Uploading $pkg"
@@ -709,9 +747,9 @@ jobs:
             fi
           done
           
-          # Upload repository index files
+          # Upload repository index files generated from full merged set
           echo "Uploading repository index"
-          for idx in *-repodata; do
+          for idx in "$WORK_DIR"/*-repodata; do
             [ -f "$idx" ] || continue
             gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$idx" --clobber
           done
