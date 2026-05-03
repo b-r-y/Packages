@@ -1,13 +1,14 @@
 # this template for 'noctalia'
 MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/ref/heads/v5")
 SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
+DATE=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/commits/$SHA" \
+  | jq -r '.commit.committer.date' | tr -d ':-' | cut -c1-8)
 
 pkgname=noctalia
-version=5.0.0.r$SHA
-revision=3
+version=5.0.0.r${DATE}.${SHA}
+revision=0
 build_style=meson
 #configure_args="-Dbuildtype=release"
- 
 short_desc="Noctalia desktop shell"
 maintainer="Noctalia <team@enoctalia.dev>"
 license="MIT"
