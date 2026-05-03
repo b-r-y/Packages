@@ -737,11 +737,17 @@ jobs:
             [ -f "$pkg" ] || continue
             echo "Uploading $pkg"
             gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg" --clobber
-            if [ -f "$pkg.sig" ]; then
+            if [ -f "$WORK_DIR/$pkg.sig" ]; then
+              echo "Uploading $pkg.sig"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$WORK_DIR/$pkg.sig" --clobber
+            elif [ -f "$pkg.sig" ]; then
               echo "Uploading $pkg.sig"
               gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig" --clobber
             fi
-            if [ -f "$pkg.sig2" ]; then
+            if [ -f "$WORK_DIR/$pkg.sig2" ]; then
+              echo "Uploading $pkg.sig2"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$WORK_DIR/$pkg.sig2" --clobber
+            elif [ -f "$pkg.sig2" ]; then
               echo "Uploading $pkg.sig2"
               gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig2" --clobber
             fi
