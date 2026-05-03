@@ -2,10 +2,6 @@
 
 A community-maintained third-party package repository providing pre-built packages
 for multiple Linux distributions from a single source.
-
-> **Browse packages:** https://universalrepo.r1xelelo.workers.dev/
-> **Source:** https://codeberg.org/UniversalRepository/Packages
-
 ---
 
 ## 📥 Installation
