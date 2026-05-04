@@ -37,6 +37,7 @@ makedepends="
  libcurl-devel
  sdbus-c++-devel
  polkit-devel
+ librsvg-devel
 "
  
 depends="
