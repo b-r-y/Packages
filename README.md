@@ -9,15 +9,20 @@ for multiple Linux distributions from a single source.
 ### Void Linux
 
 ```sh
-echo "repository=https://universalrepo.r1xelelo.workers.dev/void" \
+echo "repository=https://universalrepository.pages.dev/void" \
   | sudo tee /etc/xbps.d/universalrepo.conf
 ```
 
 ### Fedora
 
 ```sh
-sudo curl -o /etc/yum.repos.d/universal.repo \
-  https://universalrepo.r1xelelo.workers.dev/universal.repo
+[universalrepository]
+name=Universal Repository
+baseurl=https://universalrepository.pages.dev/fedora
+enabled=1
+gpgcheck=0
+metadata_expire=1h
+priority=10
 ```
 
 ### Arch Linux
@@ -31,7 +36,7 @@ sudo pacman-key --lsign-key F600BA22F0D90359
 sudo tee -a /etc/pacman.conf <<EOF
 
 [universal-repo]
-Server = https://universalrepo.r1xelelo.workers.dev/arch
+Server = https://universalrepository.pages.dev/arch
 EOF
 ```
 
