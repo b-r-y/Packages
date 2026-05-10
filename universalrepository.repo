@@ -1,0 +1,7 @@
+[universalrepository]
+name=Universal Repository
+baseurl=https://universalrepository.pages.dev/fedora
+enabled=1
+gpgcheck=0
+metadata_expire=1h
+priority=10
