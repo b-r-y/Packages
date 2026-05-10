@@ -22,7 +22,7 @@ do_install() {
 	vmkdir usr/share/applications
 	vcopy discord.desktop /usr/share/applications/
 	vmkdir ${package_location}
-	chmod +x Discord
+	chmod +x discord
 	for item in \
 		locales \
 		resources \
