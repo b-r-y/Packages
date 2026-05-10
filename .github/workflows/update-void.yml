@@ -8,6 +8,8 @@ on:
 jobs:
   update-void:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     container:
       image: ghcr.io/void-linux/void-glibc-full:latest
       options: --privileged
@@ -118,3 +120,4 @@ jobs:
         with:
           commit_message: "void: auto-update ${{ steps.autoupdate.outputs.updated_packages }}"
           file_pattern: void/
+          token: ${{ secrets.GITHUB_TOKEN }}
