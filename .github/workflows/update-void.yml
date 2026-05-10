@@ -115,7 +115,7 @@ jobs:
         if: steps.autoupdate.outputs.has_updates == 'true'
         run: |
           printf '\033[1;34m==> Stage: Commit and push updates\033[0m\n'
-          cd /work/packages
+          cd "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add void/
