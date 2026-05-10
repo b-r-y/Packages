@@ -16,13 +16,7 @@ echo "repository=https://universalrepository.pages.dev/void" \
 ### Fedora
 
 ```sh
-[universalrepository]
-name=Universal Repository
-baseurl=https://universalrepository.pages.dev/fedora
-enabled=1
-gpgcheck=0
-metadata_expire=1h
-priority=10
+sudo curl -o /etc/yum.repos.d/universal.repo https://github.com/UURepository/Packages/raw/refs/heads/stable/universalrepository.repo
 ```
 
 ### Arch Linux
