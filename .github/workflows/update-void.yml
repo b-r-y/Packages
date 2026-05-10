@@ -26,12 +26,15 @@ jobs:
           xbps-install -y sudo bash curl git libstdc++ xtools
           useradd -G xbuilder -M builder
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          path: /work/packages
 
+      - name: Link workspace to /work/packages
+        run: |
+          mkdir -p /work
+          ln -s "$GITHUB_WORKSPACE" /work/packages   # ✅ symlink, no path restriction
+      
       - name: Setup void-packages
         run: |
           printf '\033[1;34m==> Stage: Setup void-packages\033[0m\n'
