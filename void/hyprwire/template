@@ -1,6 +1,6 @@
 # Template for 'hyprwire'
 pkgname=hyprwire
-version=0.3.0
+version=0.3.1
 revision=1
 build_style=cmake
 short_desc="IPC library for Hyprland"
@@ -10,7 +10,7 @@ homepage="https://github.com/hyprwm/hyprwire"
 hostmakedepends="cmake ninja pkg-config"
 makedepends="hyprutils-devel pugixml-devel libffi-devel"
 distfiles="https://github.com/hyprwm/hyprwire/archive/refs/tags/v${version}.tar.gz"
-checksum=ba3ff4b82620209d5680ce0e771d0f2c41f78cdb96d5d84fa66e4f0709ca8de6
+checksum=92a673d40ae6a7d66fbcd0a34ec071e026e17eaeeb0040c3375e4b2a80dba737
 build_options="clang gcc"
 build_options_default="clang"
 desc_option_clang="Use clang to build" 

@@ -1,6 +1,6 @@
 # Template for 'hyprtoolkit'
 pkgname=hyprtoolkit
-version=0.5.3
+version=0.5.4
 revision=1
 build_style=cmake
 short_desc="Toolkit library for Hyprland ecosystem"
@@ -10,7 +10,7 @@ homepage="https://github.com/hyprwm/hyprtoolkit"
 hostmakedepends="cmake ninja pkg-config"
 makedepends="cairo-devel glib-devel MesaLib-devel libglvnd-devel hyprgraphics hyprlang-devel hyprutils-devel iniparser-devel pango-devel pixman-devel wayland-devel libxkbcommon-devel libdrm-devel hyprwayland-scanner aquamarine-devel wayland-protocols"
 distfiles="https://github.com/hyprwm/hyprtoolkit/archive/refs/tags/v${version}.tar.gz"
-checksum=7e6671fd4bf6f4b1eda0115aa187aa183db40d59049cca1d7546fb46fdb4cdc0
+checksum=2fb59789f231c1c4e9154ceffc1e7524c0cae154807c0d57e6166806255b570f
 build_options="clang gcc"
 build_options_default="clang"
 desc_option_clang="Use clang to build"

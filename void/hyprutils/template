@@ -1,6 +1,6 @@
 # Template file for 'hyprutils'
 pkgname=hyprutils
-version=0.12.0
+version=0.13.1
 revision=1
 build_style=cmake
 hostmakedepends="pkg-config"
@@ -12,7 +12,7 @@ maintainer="hesam-init <hesam.init@gmail.com>"
 license="BSD-3-Clause"
 homepage="https://github.com/hyprwm/hyprutils"
 distfiles="https://github.com/hyprwm/hyprutils/archive/refs/tags/v${version}.tar.gz"
-checksum=d9b495cc8c7602fe54148388fe94892a1337be871267dc5e93f4e719fe6ef8f2
+checksum=480ee026105deea64a24eb96d80cabe54b357594ce36cb05c021ea226c69aede
 
 build_options="clang gcc"
 build_options_default="clang"
