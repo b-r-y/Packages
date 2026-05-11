@@ -6,8 +6,8 @@ build_style=cmake
 configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release"
 hostmakedepends="cmake pkg-config"
 makedepends="
-	sdbus-cpp
-	sdbus-cpp-devel
+	sdbus-c++
+	sdbus-c++-devel
 	libelogind
 	elogind-devel
 	hyprwayland-scanner

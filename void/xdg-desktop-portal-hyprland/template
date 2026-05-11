@@ -10,7 +10,7 @@ makedepends="
 	hyprutils-devel
 	hyprland-protocols
 	hyprwayland-scanner
-	sdbus-cpp-devel
+	sdbus-c++-devel
 	wayland-devel
 	wayland-protocols
 	pipewire-devel
@@ -25,7 +25,7 @@ depends="
 	hyprutils
 	hyprland-protocols
 	hyprwayland-scanner
-	sdbus-cpp
+	sdbus-c++
 	xdg-desktop-portal
 	pipewire
 	qt6-base

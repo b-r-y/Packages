@@ -17,6 +17,7 @@ makedepends="
    MesaLib-devel
    pango-devel
    librsvg-devel
+   fmt-devel
 "
 short_desc="hyprland graphics resources and utilities"
 maintainer="hesam-init <hesam.init@gmail.com>"
