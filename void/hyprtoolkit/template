@@ -24,6 +24,16 @@ if [ "$build_option_clang" ]; then
     hostmakedepends+=" clang21 libstdc++ libstdc++-devel"
 fi
 
+pre_build() {
+    # Fix std::format with std::vector<std::string> - not supported in libstdc++
+    # Line 102: log call, just show first element
+    sed -i 's/themeDir\.value())/themeDir.value().front())/g' ${wrksrc}/src/system/Icons.cpp
+    # Line 217: log call, just show first element  
+    sed -i 's/\*inheritTheme)/inheritTheme->front())/g' ${wrksrc}/src/system/Icons.cpp
+    # Line 218: parseThemes call needs vector, undo the front() and wrap properly
+    sed -i 's/parseThemes(inheritTheme->front())/parseThemes({inheritTheme->front()})/g' ${wrksrc}/src/system/Icons.cpp
+}
+
 pre_configure() {
     if [ "$build_option_clang" ]; then
         export CC=clang
