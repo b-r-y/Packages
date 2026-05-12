@@ -38,6 +38,7 @@ do_install() {
 		> lua5.5.pc
 
 	vinstall lua5.5.pc 644 usr/lib/pkgconfig
+	ln -s lua5.5.pc ${DESTDIR}/usr/lib/pkgconfig/lua55.pc
 
 	# Install the documentation
 	rm -f doc/*.1
