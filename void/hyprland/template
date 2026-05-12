@@ -13,7 +13,7 @@ makedepends="
 	hyprlang-devel
 	hyprland-protocols
 	hyprwayland-scanner
-	libtoml++-devel
+	tomlplusplus-devel
 	abseil-cpp-devel
 	hwids
 	cairo-devel
