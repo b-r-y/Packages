@@ -44,6 +44,7 @@ makedepends="
 	glslang-devel
 	SPIRV-Tools-devel
 	lcms2-devel
+	lua55-devel
 "
 depends="
 	hyprlang
@@ -68,7 +69,6 @@ depends="
 	xorg-server-xwayland
 	re2
 	muparser
-	lua55-devel
 "
 short_desc="Dynamic tiling Wayland compositor that doesn't sacrifice on its looks"
 maintainer="hesam-init <hesam.init@gmail.com>"
