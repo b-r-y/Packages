@@ -1,7 +1,7 @@
 # Template file for 'lua55-vicious'
 pkgname=lua55-vicious
-version=2.4.1
-revision=2
+version=2.7.1
+revision=1
 depends="lua55"
 _desc="Modular widget library for window managers"
 short_desc="${_desc} (5.5.x)"
@@ -9,7 +9,7 @@ maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-only"
 homepage="https://github.com/Mic92/vicious"
 distfiles="https://github.com/Mic92/vicious/archive/v${version}.tar.gz"
-checksum=02a123e77c42cb5bfff66e1bf95e5b8219ec83de91ecef5e4951be021438f3a3
+checksum=6d572186b810e25f159a679744c40bfd25e7bf5e480089e648d86ffbab682f4b
 
 do_install() {
 	vdoc Changes.md

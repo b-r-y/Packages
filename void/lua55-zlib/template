@@ -1,7 +1,7 @@
 # Template file for 'lua55-zlib'
 pkgname=lua55-zlib
-version=1.2
-revision=3
+version=1.4
+revision=1
 build_style=gnu-makefile
 hostmakedepends="pkg-config"
 makedepends="lua51-devel lua52-devel lua53-devel lua55-devel zlib-devel"
@@ -11,7 +11,7 @@ maintainer="Orphaned <orphan@voidlinux.org>"
 license="MIT"
 homepage="https://github.com/brimworks/lua-zlib/"
 distfiles="${homepage}archive/v${version}.tar.gz"
-checksum=26b813ad39c94fc930b168c3418e2e746af3b2e80b92f94f306f6f954cc31e7d
+checksum=c2a59e96d2df6e192cf0bf6f19b312977ce24020c4072426c0cf8b6594767308
 
 post_extract() {
 	mkdir -p lua51

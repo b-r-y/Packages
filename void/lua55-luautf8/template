@@ -1,6 +1,6 @@
 # Template file for 'lua55-luautf8'
 pkgname=lua55-luautf8
-version=0.1.5
+version=0.2.1
 revision=1
 metapackage=yes
 hostmakedepends="luarocks-lua55"
@@ -10,7 +10,7 @@ maintainer="Luciogi <githubvoidlinux.supremacy429@passinbox.com>"
 license="MIT"
 homepage="https://github.com/starwing/luautf8"
 distfiles="https://github.com/starwing/luautf8/archive/refs/tags/${version}.tar.gz"
-checksum=f4bddecc87521c53d37c09b9e9edd70a4ab35b0074040f303cbe3a0e088af21c
+checksum=ea52075cd960aed8c37512ab31cdc166aa77a6458504d29f33ae40b93d2d8594
 
 _lua_versions="lua5.1 lua5.2 lua5.3 lua5.5"
 for _lua_version in $_lua_versions; do
