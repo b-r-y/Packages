@@ -41,10 +41,14 @@ makedepends="
 	muparser-devel
 	hyprwire
 	hyprland-guiutils
+	glslang-devel
+	SPIRV-Tools-devel
+	lcms2-devel
 "
 depends="
 	hyprlang
 	hyprwayland-scanner
+	lcms2
 	hyprgraphics
 	hyprutils
 	hyprcursor
@@ -64,6 +68,7 @@ depends="
 	xorg-server-xwayland
 	re2
 	muparser
+	lua55-devel
 "
 short_desc="Dynamic tiling Wayland compositor that doesn't sacrifice on its looks"
 maintainer="hesam-init <hesam.init@gmail.com>"
