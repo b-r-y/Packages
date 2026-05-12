@@ -4,7 +4,7 @@ version=0.55.0
 revision=1
 build_style=cmake
 configure_args="-DNO_SYSTEMD=ON -DUSE_NATIVE_EMBED=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
-hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja"
+hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja lua55"
 makedepends="
 	hyprgraphics
 	hyprcursor-devel
@@ -68,7 +68,6 @@ depends="
 	xorg-server-xwayland
 	re2
 	muparser
-	lua55
 	lua55-devel
 "
 short_desc="Dynamic tiling Wayland compositor that doesn't sacrifice on its looks"
