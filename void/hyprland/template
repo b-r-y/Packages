@@ -68,6 +68,7 @@ depends="
 	xorg-server-xwayland
 	re2
 	muparser
+	lua55
 	lua55-devel
 "
 short_desc="Dynamic tiling Wayland compositor that doesn't sacrifice on its looks"
