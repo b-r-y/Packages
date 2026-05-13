@@ -50,15 +50,17 @@ _apply_patch() {
    fi
 }
 
-pre_build() {
-   sed -i 's/ Qt6::WaylandClientPrivate//' utils/dialog/CMakeLists.txt utils/update-screen/CMakeLists.txt utils/donate-screen/CMakeLists.txt
-}
+
+
+
 
 pre_configure() {
    #if [ "$build_option_gcc" ]; then
    #   _apply_patch -p1 ${FILESDIR}/gcc.patch
    #fi
 
+   sed -i 's/ Qt6::WaylandClientPrivate//' utils/dialog/CMakeLists.txt utils/update-screen/CMakeLists.txt utils/donate-screen/CMakeLists.txt
+   
    if [ "$build_option_clang" ]; then
       export CC=clang
       export CXX=clang++
