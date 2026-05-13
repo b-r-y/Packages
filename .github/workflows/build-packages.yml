@@ -528,7 +528,7 @@ jobs:
           while IFS= read -r line; do
               [[ -z "$line" ]] && continue
               lib=$(echo "$line" | awk "{print \$1}")
-              base=$(echo "$lib" | sed "s/\.so\.[0-9]*$//")
+              base=$(echo "$lib" | sed "s/\.so\.[0-9][0-9.]*$//")
               sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
               echo "$line" >> /void-packages/common/shlibs
             done < '"$VOID_DIR"'/../common/shlibs
