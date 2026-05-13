@@ -8,9 +8,11 @@ hostmakedepends="pkg-config cmake"
 makedepends="
 	hyprwayland-scanner
 	hyprgraphics
-   hyprutils-devel
+    hyprutils-devel
  	hyprland-protocols
 	hyprlang-devel
+	hyprwire
+	hyprtoolkit
 	pango-devel
 	cairo-devel
 	libjpeg-turbo-devel
