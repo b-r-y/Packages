@@ -8,6 +8,7 @@ hostmakedepends="cmake pkg-config"
 makedepends="
    hyprutils-devel
    hyprland-qt-support
+   hyprtoolkit
    qt6-wayland-devel
    qt6-wayland-private-devel
    qt6-base-private-devel
@@ -15,6 +16,9 @@ makedepends="
    qt6-declarative-private-devel
    qt6-base-devel
    qt6-tools-devel
+   glaze
+   pciutils-devel
+   aquamarine-devel
 "
 depends="
    hyprland-qt-support

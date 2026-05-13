@@ -8,7 +8,8 @@ hostmakedepends="cmake pkg-config git"
 makedepends="
 	hyprland-protocols
 	hyprwayland-scanner
-   hyprutils-devel
+    hyprutils-devel
+	hyprlang-devel
 	wayland-devel
 	wayland-protocols
 "

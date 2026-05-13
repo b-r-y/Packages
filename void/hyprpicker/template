@@ -4,7 +4,7 @@ version=0.4.7
 revision=1
 build_style=cmake
 hostmakedepends="pkg-config hyprwayland-scanner"
-makedepends="wayland-devel wayland-protocols cairo-devel pango-devel libjpeg-turbo-devel wlroots-devel libglvnd-devel hyprutils"
+makedepends="wayland-devel wayland-protocols cairo-devel pango-devel libjpeg-turbo-devel wlroots-devel libglvnd-devel hyprutils-devel"
 short_desc="Wlroots-compatible Wayland color picker that does not suck"
 maintainer="RAR27 <rar27@tuta.io>"
 license="BSD-3-Clause"
@@ -25,18 +25,19 @@ if [ "$build_option_clang" ]; then
 	hostmakedepends+=" clang21"
 fi
 
-pre_build() {
-	make protocols
-}
+pre_configure() {
+   #if [ "$build_option_gcc" ]; then
+   #   _apply_patch -p1 ${FILESDIR}/gcc.patch
+   #fi
+  
+   if [ "$build_option_clang" ]; then
+      export CC=clang
+      export CXX=clang++
 
-do_build() {
-	if [ "$build_option_clang" ]; then
-		export CC=clang
-		export CXX=clang++
-	fi
-	cmake_build
+      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
+   fi
 }
 
 post_install() {
-	vlicense LICENSE
+   vlicense LICENSE
 }
