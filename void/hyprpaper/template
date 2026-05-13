@@ -65,6 +65,7 @@ pre_configure() {
 
 		configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
 	fi
+	sed -i 's/m_settings\.append_range(std::move(s));/m_settings.insert(m_settings.end(), std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));/' src/config/WallpaperMatcher.cpp
 }
 
 post_install() {
