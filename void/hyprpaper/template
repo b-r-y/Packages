@@ -13,6 +13,7 @@ makedepends="
 	hyprlang-devel
 	hyprwire
 	hyprtoolkit
+	aquamarine-devel
 	pango-devel
 	cairo-devel
 	libjpeg-turbo-devel
