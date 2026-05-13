@@ -1,0 +1,24 @@
+--- a/utils/dialog/CMakeLists.txt
++++ b/utils/dialog/CMakeLists.txt
+@@ -23,7 +23,6 @@ target_link_libraries(hyprland-dialog
+     Qt6::Quick
+     Qt6::WaylandClient
+-    Qt6::WaylandClientPrivate
+     Qt6::Qml
+ )
+--- a/utils/update-screen/CMakeLists.txt
++++ b/utils/update-screen/CMakeLists.txt
+@@ -31,7 +31,6 @@ target_link_libraries(hyprland-update-screen
+     Qt6::Quick
+     Qt6::WaylandClient
+-    Qt6::WaylandClientPrivate
+     Qt6::Qml
+ )
+--- a/utils/donate-screen/CMakeLists.txt
++++ b/utils/donate-screen/CMakeLists.txt
+@@ -29,7 +29,6 @@ target_link_libraries(hyprland-donate-screen
+     Qt6::Quick
+     Qt6::WaylandClient
+-    Qt6::WaylandClientPrivate
+     Qt6::Qml
+ )
