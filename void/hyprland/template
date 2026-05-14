@@ -145,7 +145,7 @@ post_install() {
 
 hyprland-devel_package() {
 	short_desc="Dynamic tiling Wayland compositor - development files"
-	depends="${sourcepkg}>=${version}_${revision} ${makedepends} ${hostmakedepends}"
+	depends="${sourcepkg}>=${version}_${revision} ${makedepends}"
 	pkg_install() {
 		vmove usr/include
 		vmove usr/share/pkgconfig
