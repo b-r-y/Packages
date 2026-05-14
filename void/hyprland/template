@@ -142,3 +142,12 @@ pre_configure() {
 post_install() {
 	vlicense LICENSE
 }
+
+hyprland-devel_package() {
+	short_desc="Dynamic tiling Wayland compositor - development files"
+	depends="${sourcepkg}>=${version}_${revision}"
+	pkg_install() {
+		vmove usr/include
+		vmove usr/share/pkgconfig
+	}
+}
