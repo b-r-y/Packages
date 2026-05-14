@@ -1,7 +1,7 @@
 # Template file for 'hyprland'
 pkgname=hyprland
 version=0.55.0
-revision=1
+revision=2
 build_style=cmake
 configure_args="-DNO_SYSTEMD=ON -DUSE_NATIVE_EMBED=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
 hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja lua55"
@@ -145,7 +145,7 @@ post_install() {
 
 hyprland-devel_package() {
 	short_desc="Dynamic tiling Wayland compositor - development files"
-	depends="${sourcepkg}>=${version}_${revision}"
+	depends="${sourcepkg}>=${version}_${revision} ${makedepends} ${hostmakedepends}"
 	pkg_install() {
 		vmove usr/include
 		vmove usr/share/pkgconfig
