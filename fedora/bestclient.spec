@@ -1,12 +1,12 @@
 %global _name BestClient
 
 Name:           bestclient
-Version:        1.3
+Version:        1.6.1
 Release:        1%{?dist}
 Summary:        A DDRaceNetwork modification adding new features
 License:        Unknown
-URL:            https://google.com
-Source0:        
+URL:            https://bestclient.fun/
+Source0:        https://github.com/BestProjectTeam/BestClient/releases/download/v%{version}/bestclient-%{version}-linux.x86.tar.xz
 Source1:        https://rxelelo.gitlab.io/rxrepo/icons/%{name}.png
 ExclusiveArch:  x86_64
 
@@ -47,7 +47,7 @@ install -dm0755 %{buildroot}%{_datadir}/applications
 install -dm0755 %{buildroot}/opt/%{name}
 install -dm0755 %{buildroot}/opt/%{name}/game
 
-cp -a %{name}/%{_name}-*-linux_x86_64/* %{buildroot}/opt/%{name}/game
+cp -a %{name}/%{name}-*-linux_x86_64/* %{buildroot}/opt/%{name}/game
 
 chmod +x %{buildroot}/opt/%{name}/game/DDNet
 
