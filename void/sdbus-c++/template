@@ -1,6 +1,6 @@
 # Template file for 'sdbus-c++'
 pkgname=sdbus-c++
-version=2.2.1
+version=2.3.0
 revision=1
 build_style=cmake
 configure_args="
@@ -16,7 +16,7 @@ maintainer="Ly-sec <void@lysec.dev>"
 license="LGPL-2.1-only"
 homepage="https://github.com/Kistler-Group/sdbus-cpp"
 distfiles="https://github.com/Kistler-Group/sdbus-cpp/archive/v${version}.tar.gz"
-checksum=da69a0104beb6e51415a59f1571a47beb1eacc65cc6027b250eb1cf13ff4f802
+checksum=8c01d28fa7b1a973d7a9cfdfd65480e733a52172506eaa1fea225b681590fe3c
 
 sdbus-c++-devel_package() {
 	depends="${sourcepkg}>=${version}_${revision}"
