@@ -38,6 +38,7 @@ makedepends="
  sdbus-c++-devel
  polkit-devel
  librsvg-devel
+ jemalloc-devel
 "
  
 depends="
@@ -46,6 +47,7 @@ depends="
  pam
  libwebp
  basu
+ jemalloc
 "
  
 CXXFLAGS+=" -std=c++20"
