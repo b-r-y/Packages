@@ -1,7 +1,7 @@
 # Template file for 'hyprland'
 pkgname=hyprland
 version=0.55.2
-revision=1
+revision=2
 build_style=cmake
 configure_args="-DNO_SYSTEMD=ON -DUSE_NATIVE_EMBED=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
 hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja lua55"
@@ -141,6 +141,9 @@ pre_configure() {
 
 post_install() {
 	vlicense LICENSE
+    
+    vinstall ${wrksrc}/build/hyprland.pc 644 usr/share/pkgconfig
+    vinstall ${wrksrc}/build/hyprland.pc 644 usr/lib/pkgconfig
 }
 
 hyprland-devel_package() {
@@ -149,5 +152,6 @@ hyprland-devel_package() {
 	pkg_install() {
 		vmove usr/include
 		vmove usr/share/pkgconfig
+    	make -C ${wrksrc} installheaders PREFIX=/usr DESTDIR=${DESTDIR}
 	}
 }
