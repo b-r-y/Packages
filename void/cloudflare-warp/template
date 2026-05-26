@@ -20,6 +20,7 @@ nocross=yes
 nopie=yes
 
 do_extract() {
+    cd ${XBPS_BUILDDIR}
     bsdtar -xf ${XBPS_SRCDISTDIR}/${pkgname}-${version}/cloudflare-warp_${version}.0_amd64.deb
     bsdtar -xf data.tar.gz -C ${WRKSRC}
 }
