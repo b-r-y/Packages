@@ -1,0 +1,40 @@
+# Template file for 'cloudflare-warp'
+pkgname=cloudflare-warp
+version=2026.4.1350
+revision=1
+archs=x86_64
+short_desc="Cloudflare Warp Client"
+maintainer="Rain Xelelo <rXelelo@outlook.com>"
+license="unknown"
+homepage="https://1.1.1.1"
+distfiles="https://pkg.cloudflareclient.com/pool/noble/main/c/cloudflare-warp/cloudflare-warp_${version}.0_amd64.deb"
+checksum=f35ae16dd97e8a78dd970341cb6ae3e8131af1962f79cb7b9d698a874eab7f2a
+
+depends="at-spi2-core ayatana-ido cairo curl dbus fontconfig gdk-pixbuf glib gtk+3
+ harfbuzz hicolor-icon-theme libayatana-appindicator libayatana-indicator
+ libdbusmenu-glib libepoxy libsoup3 nftables nspr nss pango webkit2gtk41 zlib"
+
+provides="warp-cli-${version}_${revision} warp-diag-${version}_${revision} warp-svc-${version}_${revision}"
+conflicts="cloudflare-warp"
+nocross=yes
+nopie=yes
+
+do_extract() {
+    bsdtar -xf ${XBPS_SRCDISTDIR}/${pkgname}-${version}/cloudflare-warp_${version}.0_amd64.deb
+    bsdtar -xf data.tar.gz -C ${WRKSRC}
+}
+
+do_install() {
+    # Binaries
+    cp -R ${WRKSRC}/bin/. ${DESTDIR}/usr/bin/
+    cp -R ${WRKSRC}/usr/bin/. ${DESTDIR}/usr/bin/
+
+    # Share files (icons, desktop, dbus)
+    cp -R ${WRKSRC}/usr/share ${DESTDIR}/usr/
+
+    # Runit system service
+    vsv warp-svc
+
+    # XDG autostart
+    cp -R ${WRKSRC}/etc/xdg ${DESTDIR}/etc/
+}
