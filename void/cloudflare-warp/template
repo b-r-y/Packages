@@ -12,7 +12,7 @@ checksum=f35ae16dd97e8a78dd970341cb6ae3e8131af1962f79cb7b9d698a874eab7f2a
 
 depends="at-spi2-core ayatana-ido cairo curl dbus fontconfig gdk-pixbuf glib gtk+3
  harfbuzz hicolor-icon-theme libayatana-appindicator libayatana-indicator
- libdbusmenu-glib libepoxy libsoup3 nftables nspr nss pango webkit2gtk41 zlib"
+ libdbusmenu-glib libepoxy libsoup3 nftables nspr nss pango libwebkit2gtk41 zlib"
 
 provides="warp-cli-${version}_${revision} warp-diag-${version}_${revision} warp-svc-${version}_${revision}"
 conflicts="cloudflare-warp"
