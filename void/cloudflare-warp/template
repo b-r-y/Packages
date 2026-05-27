@@ -10,7 +10,7 @@ homepage="https://1.1.1.1"
 distfiles="https://pkg.cloudflareclient.com/pool/noble/main/c/cloudflare-warp/cloudflare-warp_${version}.0_amd64.deb"
 checksum=f35ae16dd97e8a78dd970341cb6ae3e8131af1962f79cb7b9d698a874eab7f2a
 
-hostmakedeps="tar"
+hostmakedepends="tar"
 depends="at-spi2-core ayatana-ido cairo curl dbus fontconfig gdk-pixbuf glib gtk+3
  harfbuzz hicolor-icon-theme libayatana-appindicator libayatana-indicator
  libdbusmenu-glib libepoxy libsoup3 nftables nspr nss pango libwebkit2gtk41 zlib"
