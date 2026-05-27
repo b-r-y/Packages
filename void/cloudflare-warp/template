@@ -23,20 +23,20 @@ nopie=yes
 do_extract() {
     cd ${XBPS_BUILDDIR}
     bsdtar -xf ${XBPS_SRCDISTDIR}/${pkgname}-${version}/cloudflare-warp_${version}.0_amd64.deb
-    tar -xf data.tar.gz -C ${WRKSRC}
+    tar -xf data.tar.gz -C ${wrksrc}
 }
 
 do_install() {
     # Binaries
-    cp -R ${WRKSRC}/bin/. ${DESTDIR}/usr/bin/
-    cp -R ${WRKSRC}/usr/bin/. ${DESTDIR}/usr/bin/
+    cp -R ${wrksrc}/bin/. ${DESTDIR}/usr/bin/
+    cp -R ${wrksrc}/usr/bin/. ${DESTDIR}/usr/bin/
 
     # Share files (icons, desktop, dbus)
-    cp -R ${WRKSRC}/usr/share ${DESTDIR}/usr/
+    cp -R ${wrksrc}/usr/share ${DESTDIR}/usr/
 
     # Runit system service
     vsv warp-svc
 
     # XDG autostart
-    cp -R ${WRKSRC}/etc/xdg ${DESTDIR}/etc/
+    cp -R ${wrksrc}/etc/xdg ${DESTDIR}/etc/
 }
