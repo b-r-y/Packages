@@ -27,7 +27,8 @@ do_extract() {
 }
 
 do_install() {
-    ls -la ${wrksrc}
+    mkdir -p ${DESTDIR}/usr/bin/
+    mkdir -p ${DESTDIR}/etc/
     # Binaries
     cp -R ${wrksrc}/bin/* ${DESTDIR}/usr/bin/
     cp -R ${wrksrc}/usr/bin/* ${DESTDIR}/usr/bin/
