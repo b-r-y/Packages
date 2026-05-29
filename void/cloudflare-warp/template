@@ -31,7 +31,7 @@ do_install() {
     mkdir -p ${DESTDIR}/etc/
     # Binaries
     cp -r ${wrksrc}/bin ${DESTDIR}/usr/
-    cp -r ${wrksrc}/usr/bin ${DESTDIR}/usr/
+    # cp -r ${wrksrc}/usr/bin ${DESTDIR}/usr/
 
     # Share files (icons, desktop, dbus)
     cp -r ${wrksrc}/usr/share ${DESTDIR}/usr/
