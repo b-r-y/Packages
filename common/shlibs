@@ -8,3 +8,4 @@ libaquamarine.so.10 aquamarine-0.11.0_1
 libhyprcursor.so.0 hyprcursor-0.1.13_1
 libhyprwire.so.3 hyprwire-0.3.1_1
 liblua5.5.so.5.5 lua55-5.5.0_1
+libpcap.so.0.8 cloudflare-warp-2026.4.1350_1
