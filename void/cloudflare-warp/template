@@ -30,15 +30,15 @@ do_install() {
     mkdir -p ${DESTDIR}/usr/bin/
     mkdir -p ${DESTDIR}/etc/
     # Binaries
-    cp -R ${wrksrc}/bin/* ${DESTDIR}/usr/bin/
-    cp -R ${wrksrc}/usr/bin/* ${DESTDIR}/usr/bin/
+    cp -r ${wrksrc}/bin ${DESTDIR}/usr/
+    cp -r ${wrksrc}/usr/bin ${DESTDIR}/usr/
 
     # Share files (icons, desktop, dbus)
-    cp -R ${wrksrc}/usr/share ${DESTDIR}/usr/
+    cp -r ${wrksrc}/usr/share ${DESTDIR}/usr/
 
     # Runit system service
     vsv warp-svc
 
     # XDG autostart
-    cp -R ${wrksrc}/etc/xdg ${DESTDIR}/etc/
+    cp -r ${wrksrc}/etc/xdg ${DESTDIR}/etc/
 }
