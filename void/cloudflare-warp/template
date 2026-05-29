@@ -27,6 +27,7 @@ do_extract() {
 }
 
 do_install() {
+    ls -la ${wrksrc}
     # Binaries
     cp -R ${wrksrc}/bin/. ${DESTDIR}/usr/bin/
     cp -R ${wrksrc}/usr/bin/. ${DESTDIR}/usr/bin/
