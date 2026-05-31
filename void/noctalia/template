@@ -39,6 +39,8 @@ makedepends="
  polkit-devel
  librsvg-devel
  jemalloc-devel
+ libxml2-devel
+ libqalculate-devel
 "
  
 depends="
