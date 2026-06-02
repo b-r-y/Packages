@@ -2,6 +2,8 @@ name: Build All Packages
 
 on:
   push:
+    branches:
+      - stable
     paths:
       - 'arch/**'
       - 'fedora/**'
