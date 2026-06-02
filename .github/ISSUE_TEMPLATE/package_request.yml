@@ -26,6 +26,19 @@ body:
     validations:
       required: true
 
+  - type: checkboxes
+    id: target-distros
+    attributes:
+      label: 🐧 Supported / Target Distributions
+      description: Which distributions should this package be built for? (Select all that apply)
+      options:
+        - label: Arch Linux
+        - label: Void Linux
+        - label: Fedora
+        - label: All
+    validations:
+      required: true
+
   - type: input
     id: aur-link
     attributes:
