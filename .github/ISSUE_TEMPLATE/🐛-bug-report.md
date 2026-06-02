@@ -30,8 +30,4 @@ assignees: ''
 2. See error output:
 ```text
 [Paste error messages, stack traces, or build failure logs here]
-
----
-
-### What to do next:
-Once you've filled out those fields, click the **Propose changes** or **Save changes** button in the top right corner of the screen. GitHub will handle creating the `.github/ISSUE_TEMPLATE/bug_report.md` file and committing it to your repo automatically!
+```
