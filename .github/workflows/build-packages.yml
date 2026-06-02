@@ -125,7 +125,7 @@ jobs:
           ls -lh /tmp/built-packages/
       
       - name: Create Arch repository database
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         run: |
           printf '\033[1;34m==> Stage: Create Arch repository database\033[0m\n'
@@ -144,7 +144,7 @@ jobs:
           ls -lh
       
       - name: Upload Arch packages to release
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -351,7 +351,7 @@ jobs:
           ls -lh /tmp/built-packages/
       
       - name: Create Fedora repository metadata
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         run: |
           printf '\033[1;34m==> Stage: Create Fedora repository metadata\033[0m\n'
@@ -368,7 +368,7 @@ jobs:
           ls -lh repodata/
       
       - name: Upload Fedora packages to release
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -604,7 +604,7 @@ jobs:
           ls -lh /tmp/built-packages/
       
       - name: Create Void repository index
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -681,7 +681,7 @@ jobs:
           ls -lh
       
       - name: Upload Void packages to release
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
