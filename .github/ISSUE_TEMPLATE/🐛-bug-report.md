@@ -1,10 +1,9 @@
 ---
-name: "\U0001F41B Bug Report"
+name: 🐛 Bug Report
 about: Report a broken, misconfigured, or failing package.
-title: "[Bug]: "
-labels: bug
+title: '[Bug]: '
+labels: ['bug', 'needs-triage']
 assignees: ''
-
 ---
 
 ### 📦 Package Name
@@ -31,3 +30,8 @@ assignees: ''
 2. See error output:
 ```text
 [Paste error messages, stack traces, or build failure logs here]
+
+---
+
+### What to do next:
+Once you've filled out those fields, click the **Propose changes** or **Save changes** button in the top right corner of the screen. GitHub will handle creating the `.github/ISSUE_TEMPLATE/bug_report.md` file and committing it to your repo automatically!
