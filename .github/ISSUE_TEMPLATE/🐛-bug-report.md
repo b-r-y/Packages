@@ -24,10 +24,3 @@ assignees: ''
 * **Package Version:** (e.g., `1.4.2_1`)
 * **Mirror / Repository URL:** 
 * **Custom Configs (if any):** 
-
-### 🛠️ Steps to Reproduce
-1. Run command: `...`
-2. See error output:
-```text
-[Paste error messages, stack traces, or build failure logs here]
-```
