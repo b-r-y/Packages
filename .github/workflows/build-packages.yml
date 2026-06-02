@@ -509,8 +509,9 @@ jobs:
           VOID_DIR=$(pwd)/void
           
           git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
-          for pkg in ghostty-terminfo ghostty zig llvm22; do
-            rm -rf /void-packages/srcpkgs/$pkg
+          for pkg_path in "$VOID_DIR"/*/; do
+            pkg=$(basename "$pkg_path")
+            rm -rf "/void-packages/srcpkgs/$pkg"
           done
           cd /void-packages
           echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
