@@ -1,27 +1,7 @@
 name: Build All Packages
 
 on:
-  push:
-    paths:
-      - 'arch/**'
-      - 'fedora/**'
-      - 'void/**'
-  workflow_dispatch:
-    inputs:
-      skip_packages:
-        description: 'Optional comma-separated package names to skip (without leading underscore)'
-        required: false
-        default: ''
-      skip_if_in_other_repos:
-        description: 'Skip package build if same package exists in other distro repos'
-        required: false
-        type: boolean
-        default: false
-
-run-name: ${{ github.event.head_commit.message || github.ref_name }}
-
-permissions:
-  contents: write
+  pull_request:
 
 jobs:
   build-arch:
