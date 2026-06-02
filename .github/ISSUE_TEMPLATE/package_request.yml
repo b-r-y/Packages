@@ -1,0 +1,68 @@
+name: ➕ New Package Request
+description: Request a new package or software to be added to the repository.
+title: "[Package Request]: "
+labels: ["new-package", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что предлагаете новый пакет! Пожалуйста, заполните поля ниже, чтобы нам было проще его собрать.
+
+  - type: input
+    id: package-name
+    attributes:
+      label: 📦 Package Name
+      description: What is the exact name of the package?
+      placeholder: e.g., ripgrep
+    validations:
+      required: true
+
+  - type: input
+    id: upstream-url
+    attributes:
+      label: 🔗 Upstream Source URL
+      description: Link to the official source code (GitHub, GitLab, official site).
+      placeholder: e.g., https://github.com/user/repo
+    validations:
+      required: true
+
+  - type: input
+    id: aur-link
+    attributes:
+      label: 🔍 AUR / Other Distro Link (Optional)
+      description: Link to the AUR package or similar repository template if it already exists elsewhere.
+      placeholder: e.g., https://aur.archlinux.org/packages/package-name
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Description
+      description: Provide a brief description of what this software does and why it should be added.
+      placeholder: This tool is a fast alternative to...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build-system
+    attributes:
+      label: 🔧 Build System / Language
+      description: How is this package built?
+      options:
+        - Rust (Cargo)
+        - Go
+        - C / C++ (CMake/Make)
+        - Python
+        - Shell script / Binary release
+        - Other (Specify in context)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📝 Additional Context
+      description: Add any extra information, license details, or specific build flags here.
+    validations:
+      required: false
