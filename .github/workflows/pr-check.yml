@@ -271,7 +271,7 @@ jobs:
           VOID_DIR=$(pwd)/void
           
           git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
-          for pkg in ghostty-terminfo ghostty zig llvm22; do
+          for pkg in "$VOID_DIR"/* do
             rm -rf /void-packages/srcpkgs/$pkg
           done
           cd /void-packages
