@@ -1,7 +1,7 @@
 name: ➕ New Package Request
 description: Request a new package or software to be added to the repository.
 title: "[Package Request]: "
-labels: ["new-package", "needs-triage"]
+labels: ["pkg-request"]
 body:
   - type: markdown
     attributes:
