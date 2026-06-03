@@ -21,7 +21,7 @@ jobs:
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
           xbps-install -Syu xbps
-          xbps-install -y sudo bash curl git libstdc++
+          xbps-install -y sudo curl git libstdc++
           useradd -G xbuilder -M builder
 
       - name: Checkout UURepository/Packages
@@ -54,16 +54,14 @@ jobs:
       - name: Merge custom shlibs into void-packages
         run: |
           printf '\033[1;34m==> Stage: Merge custom shlibs\033[0m\n'
-          VOID_DIR=$(pwd)/void
-          sudo -Eu builder bash -c '
-            while IFS= read -r line; do
-              [[ -z "$line" ]] && continue
-              lib=$(echo "$line" | awk "{print \$1}")
-              base=$(echo "$lib" | sed "s/\.so\.[0-9][0-9.]*$//")
-              sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
-              echo "$line" >> /void-packages/common/shlibs
-            done < '"$VOID_DIR"'/../common/shlibs
-          '
+          SHLIBS_SRC="$(pwd)/common/shlibs"
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            lib=$(echo "$line" | awk '{print $1}')
+            base=$(echo "$lib" | sed 's/\.so\.[0-9][0-9.]*$//')
+            sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
+            echo "$line" >> /void-packages/common/shlibs
+          done < "$SHLIBS_SRC"
 
       - name: Bootstrap void-packages
         run: |
@@ -90,6 +88,7 @@ jobs:
         run: |
           printf '\033[1;34m==> Stage: Build packages and collect shlibs\033[0m\n'
           VOID_DIR=$(pwd)/void
+          SHLIBS_FILE=$(pwd)/common/shlibs
 
           for pkgdir in "$VOID_DIR"/*/; do
             [ -d "$pkgdir" ] || continue
@@ -125,22 +124,28 @@ jobs:
             echo "=> Shlibs provided by $pkgname:"
             echo "$PROVIDES"
 
-            # Update common/shlibs in the repo checkout
-            while IFS= read -r line; do
+            # Update common/shlibs in the repo checkout (POSIX: pipe into while)
+            echo "$PROVIDES" | while IFS= read -r line; do
+              [ -z "$line" ] && continue
               SONAME=$(echo "$line" | awk '{print $1}')
               PKGVER=$(echo "$line" | awk '{print $2}')
-              [ -z "$SONAME" ] || [ -z "$PKGVER" ] && continue
+              [ -z "$SONAME" ] && continue
+              [ -z "$PKGVER" ] && continue
 
-              if grep -q "^${SONAME} " common/shlibs; then
-                OLD=$(grep "^${SONAME} " common/shlibs)
-                sed -i "s|^${SONAME} .*|${SONAME} ${PKGVER}|" common/shlibs
-                NEW=$(grep "^${SONAME} " common/shlibs)
-                [ "$OLD" != "$NEW" ] && echo "  updated: $OLD -> $NEW" || echo "  unchanged: $NEW"
+              if grep -q "^${SONAME} " "$SHLIBS_FILE"; then
+                OLD=$(grep "^${SONAME} " "$SHLIBS_FILE")
+                sed -i "s|^${SONAME} .*|${SONAME} ${PKGVER}|" "$SHLIBS_FILE"
+                NEW=$(grep "^${SONAME} " "$SHLIBS_FILE")
+                if [ "$OLD" != "$NEW" ]; then
+                  echo "  updated: $OLD -> $NEW"
+                else
+                  echo "  unchanged: $NEW"
+                fi
               else
-                echo "${SONAME} ${PKGVER}" >> common/shlibs
+                echo "${SONAME} ${PKGVER}" >> "$SHLIBS_FILE"
                 echo "  added: ${SONAME} ${PKGVER}"
               fi
-            done <<< "$PROVIDES"
+            done
 
             # Clean destdir for next package
             sudo -Eu builder sh -c "cd /void-packages && ./xbps-src clean $pkgname" || true
