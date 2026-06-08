@@ -55,7 +55,7 @@ depends="
 CXXFLAGS+=" -std=c++23"
 
 do_fetch() {
-        git clone https://github.com/noctalia-dev/noctalia-shell.git ${wrksrc}
+        git clone https://github.com/noctalia-dev/noctalia.git ${wrksrc}
 }
  
 post_install() {
