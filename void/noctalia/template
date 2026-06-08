@@ -1,5 +1,5 @@
 # this template for 'noctalia'
-MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/refs/heads/v5")
+MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/git/refs/heads/main")
 SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
 
 COMMIT=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-shell/commits/$SHA")
@@ -52,7 +52,7 @@ depends="
  jemalloc
 "
  
-CXXFLAGS+=" -std=c++20"
+CXXFLAGS+=" -std=c++23"
 
 do_fetch() {
         git clone https://github.com/noctalia-dev/noctalia-shell.git ${wrksrc}
