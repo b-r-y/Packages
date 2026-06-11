@@ -19,6 +19,7 @@ hostmakedepends="meson ninja pkg-config git"
 
 makedepends="
  wayland-devel
+ wlroots0.20-devel
  wayland-protocols
  libepoxy-devel
  MesaLib-devel
