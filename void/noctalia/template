@@ -1,8 +1,8 @@
 # this template for 'noctalia'
 
 pkgname=noctalia
-version=5.0.0.r2026.06.15.577bf8c
-revision=0
+version=5.0.0.r2026.06.15.7ae1365
+revision=1
 build_style=meson
 #configure_args="-Dbuildtype=release"
 short_desc="Noctalia desktop shell"

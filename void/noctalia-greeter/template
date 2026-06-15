@@ -1,8 +1,8 @@
 # this template for 'noctalia-greeter'
 
 pkgname=noctalia-greeter
-version=0.0.1
-revision=0
+version=0.0.1.r2026.06.14.f19b5fe
+revision=1
 build_style=meson
 #configure_args="-Dbuildtype=release"
 short_desc="Noctalia themed greeter for greetd"
