@@ -1,12 +1,7 @@
 # this template for 'noctalia'
-MAIN=$(curl -SL "https://api.github.com/repos/noctalia-dev/noctalia/git/refs/heads/main")
-SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
-
-COMMIT=$(curl -SL "https://api.github.com/repos/noctalia-dev/noctalia/commits/$SHA")
-DATE=$(echo $COMMIT | jq -r '.commit.committer.date | split("T")[0] | gsub("-"; ".")')
 
 pkgname=noctalia
-version=5.0.0.r${DATE}.${SHA}
+version=5.0.0.r2026.06.15.b1eb433
 revision=0
 build_style=meson
 #configure_args="-Dbuildtype=release"
@@ -56,6 +51,8 @@ CXXFLAGS+=" -std=c++23"
 
 do_fetch() {
         git clone https://github.com/noctalia-dev/noctalia.git ${wrksrc}
+        cd ${wrksrc}
+        git checkout ${version##*.}
 }
  
 post_install() {
