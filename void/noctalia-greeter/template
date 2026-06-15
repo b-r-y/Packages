@@ -1,12 +1,7 @@
-# this template for 'noctalia'
-MAIN=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-greeter/git/refs/heads/main")
-SHA=$(echo $MAIN | jq -r '.object.sha[:7]')
-
-COMMIT=$(curl -S "https://api.github.com/repos/noctalia-dev/noctalia-greeter/commits/$SHA")
-DATE=$(echo $COMMIT | jq -r '.commit.committer.date | split("T")[0] | gsub("-"; ".")')
+# this template for 'noctalia-greeter'
 
 pkgname=noctalia-greeter
-version=0.0.1.r${DATE}.${SHA}
+version=0.0.1
 revision=0
 build_style=meson
 #configure_args="-Dbuildtype=release"
@@ -45,6 +40,8 @@ CXXFLAGS+=" -std=c++20"
 
 do_fetch() {
         git clone https://github.com/noctalia-dev/noctalia-greeter.git --branch main ${wrksrc}
+        cd ${wrksrc}
+        git checkout ${version##*.}
 }
 
 post_install() {
