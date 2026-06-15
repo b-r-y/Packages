@@ -1,7 +1,7 @@
 # Template for 'hyprtoolkit'
 pkgname=hyprtoolkit
 version=0.5.4
-revision=2
+revision=3
 build_style=cmake
 short_desc="Toolkit library for Hyprland ecosystem"
 maintainer="Rain Xelelo <rxelelo@outlook.com>"
