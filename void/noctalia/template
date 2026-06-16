@@ -1,7 +1,7 @@
 # this template for 'noctalia'
 
 pkgname=noctalia
-version=5.0.0.r2026.06.15.7ae1365
+version=5.0.0.r2026.06.16.7a0cfab
 revision=1
 build_style=meson
 #configure_args="-Dbuildtype=release"

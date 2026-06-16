@@ -1,7 +1,7 @@
 # this template for 'noctalia-greeter'
 
 pkgname=noctalia-greeter
-version=0.0.1.r2026.06.14.f19b5fe
+version=0.0.1.r2026.06.16.773e322
 revision=1
 build_style=meson
 #configure_args="-Dbuildtype=release"
