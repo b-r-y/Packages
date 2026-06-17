@@ -9,3 +9,6 @@ libhyprcursor.so.0 hyprcursor-0.1.13_1
 libhyprwire.so.3 hyprwire-0.3.1_1
 liblua5.5.so.5.5 lua55-5.5.0_1
 libpcap.so.0.8 cloudflare-warp-2026.4.1350_1
+libgo.so.25 libgo-16.1.0_1
+libgnarl-16.so libada-16.1.0_1
+libgnat-16.so libada-16.1.0_1
