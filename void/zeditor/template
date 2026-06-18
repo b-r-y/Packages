@@ -1,0 +1,47 @@
+# Template file for 'zeditor'
+pkgname=zeditor
+version=1.7.2
+revision=1
+short_desc="Code at the speed of thought – Zed is a high-performance, multiplayer code editor from the creators of Atom and Tree-sitter. "
+maintainer="Rain Xelelo <rXelelo@outlook.com"
+license="GPL-3.0-only"
+homepage="https://zed.dev"
+distfiles="https://github.com/zed-industries/zed/releases/download/v${version}/zed-linux-x86_64.tar.gz"
+checksum=b9d6987934c2a03833f5f196508f15ab8868d42396dc1a7607186ad70d6e9c02
+
+depends="
+alsa-lib
+curl
+fontconfig
+glib
+glibc
+libgcc
+libgit2
+libstdc++
+libxcb
+libX11
+libxkbcommon
+libxkbcommon-x11
+netcat
+nodejs
+sqlite
+vulkan-loader
+wayland
+zlib
+zstd
+electron35
+"
+
+do_install() {
+	vbin bin/zed
+
+	vinstall libexec/zed-editor 755 usr/libexec
+
+	cp -r lib/* ${DESTDIR}/usr/lib/
+
+	vinstall share/applications/dev.zed.Zed.desktop 644 usr/share/applications
+	vinstall share/icons/hicolor/512x512/apps/zed.png 644 usr/share/icons/hicolor/512x512/apps
+	vinstall share/icons/hicolor/1024x1024/apps/zed.png 644 usr/share/icons/hicolor/1024x1024/apps
+	
+	vlicense licenses.md
+}
