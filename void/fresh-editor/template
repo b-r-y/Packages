@@ -1,0 +1,39 @@
+# Template file for 'fresh-editor'
+pkgname=fresh-editor
+version=0.4.0
+revision=1
+short_desc="A lightweight, fast terminal-based text editor with LSP support and TypeScript plugins"
+maintainer="Rain Xelelo <rXelelo@outlook.com>"
+license="GPL-2.0-only"
+homepage="https://sinelaw.github.io/fresh/"
+distfiles="https://github.com/sinelaw/fresh/archive/refs/tags/v${version}.tar.gz"
+checksum=7855477d96fe9db89fbb8bb874a09c1dd94eaf1bc121a76c20355b3b3ebb2f03
+
+build_style=cargo
+hostmakedepends="cargo clang pkg-config"
+makedepends="oniguruma-devel"
+depends="glibc libgcc oniguruma"
+
+do_install() {
+    vinstall target/x86_64-unknown-linux-gnu/release/fresh 755 usr/libexec/${pkgname}
+    vcopy crates/fresh-editor/plugins usr/libexec/${pkgname}/
+    vcopy crates/fresh-editor/keymaps usr/libexec/${pkgname}/
+
+    vmkdir usr/bin
+    ln -sf /usr/libexec/${pkgname}/fresh "${DESTDIR}/usr/bin/fresh"
+
+    vinstall crates/fresh-editor/resources/fresh.desktop 644 \
+        usr/share/applications
+
+    # 4. Hicolor icons (Allowed in usr/share/icons)
+    for icon in crates/fresh-gui/resources/icon_*x*.png; do
+        size=${icon##*icon_}
+        size=${size%.png}
+        vinstall "$icon" 644 \
+            "usr/share/icons/hicolor/${size}/apps" fresh.png
+    done
+
+    vman crates/fresh-editor/resources/fresh.1
+    vdoc README.md
+    vlicense LICENSE
+}
