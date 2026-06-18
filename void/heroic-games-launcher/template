@@ -1,0 +1,43 @@
+# Template file for 'heroic-games-launcher'
+pkgname=heroic-games-launcher
+version=2.22.0
+revision=1
+short_desc="Native GOG, Epic Games and Amazon games launcher for Linux"
+maintainer="Rain Xelelo <rXelelo@outlook.com>"
+license="GPL-3.0-only"
+homepage="https://heroicgameslauncher.com/"
+distfiles="https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/archive/refs/tags/v${version}.tar.gz"
+checksum="a4122c4e39a8e240cf86ee73d6c8c57632ca638284b71faffbf8e62237bf3725"
+hostmakedepends="nodejs pnpm python3 desktop-file-utils electron35"
+depends="electron35 zlib libgcc"
+nopie_files="/usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/comet /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/gogdl /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/legendary /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/nile /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/vulkan-helper"
+
+do_build() {
+	HOME="${wrksrc}/.electron-gyp" pnpm install
+	pnpm run download-helper-binaries
+	./node_modules/.bin/electron-vite build
+	./node_modules/.bin/electron-builder --linux --x64 --dir \
+		-c.electronDist=/usr/lib/electron35/ \
+		-c.electronVersion=$(cat /usr/lib/electron35/version)
+}
+
+do_install() {
+	vmkdir usr/lib/heroic
+	cp -rf dist/linux-unpacked/resources/app.asar{,.unpacked} \
+		"${DESTDIR}/usr/lib/heroic/"
+
+	vbin /dev/stdin heroic <<EOF
+#!/bin/bash
+exec electron35 /usr/lib/heroic/app.asar "\$@"
+EOF
+
+	vinstall flatpak/com.heroicgameslauncher.hgl.png 644 usr/share/pixmaps
+	vinstall flatpak/templates/com.heroicgameslauncher.hgl.metainfo.xml.template \
+		644 usr/share/metainfo com.heroicgameslauncher.hgl.metainfo.xml
+
+	desktop-file-edit \
+		--set-key=Exec --set-value="heroic %U" \
+		--set-key=StartupWMClass --set-value=heroic \
+		flatpak/com.heroicgameslauncher.hgl.desktop
+	vinstall flatpak/com.heroicgameslauncher.hgl.desktop 644 usr/share/applications
+}
