@@ -1,0 +1,59 @@
+# Template file for 'floorp'
+pkgname=floorp
+version=12.15.0
+revision=1
+short_desc="Firefox-based web browser focused on performance and customizability"
+maintainer="Rain Xelelo <rXelelo@outlook.com>"
+license="MPL-2.0"
+homepage="https://github.com/Floorp-Projects/Floorp"
+distfiles="https://github.com/Floorp-Projects/Floorp/releases/download/v${version}/floorp-linux-x86_64.tar.xz"
+checksum="cdc3106964671c836499ec5d342360961cb8e8a95fdddb2231851aea3c010f01"
+depends="alsa-lib gtk+3"
+hostmakedepends="ImageMagick"
+nocross=yes
+nopie=yes
+
+do_install() {
+	# app
+	vmkdir usr/lib/floorp
+	cp -a ./* ${DESTDIR}/usr/lib/floorp/
+
+	# symlink
+	ln -sf floorp ${DESTDIR}/usr/lib/floorp/floorp-bin
+
+	# icons (symlinks for small sizes)
+	for i in 16 32 48 64 128; do
+		vmkdir usr/share/icons/hicolor/${i}x${i}/apps
+		ln -sf /usr/lib/floorp/browser/chrome/icons/default/default${i}.png \
+			${DESTDIR}/usr/share/icons/hicolor/${i}x${i}/apps/floorp.png
+	done
+
+	# icons (resized for large sizes)
+	for i in 256 512; do
+		vmkdir usr/share/icons/hicolor/${i}x${i}/apps
+		magick ${FILESDIR}/floorp.png -resize ${i}x${i} \
+			-define png:compression-filter=0 \
+			-define png:compression-level=9 \
+			-define png:compression-strategy=0 \
+			${DESTDIR}/usr/share/icons/hicolor/${i}x${i}/apps/floorp.png
+	done
+
+	# desktop entry
+	vinstall ${FILESDIR}/floorp.desktop 644 usr/share/applications
+
+	# launcher script
+	vbin /dev/stdin floorp <<EOF
+#!/bin/sh
+exec /usr/lib/floorp/floorp "\$@"
+EOF
+
+	# disable auto-updates
+	vmkdir usr/lib/floorp/distribution
+	cat > ${DESTDIR}/usr/lib/floorp/distribution/policies.json <<EOF
+{
+  "policies": {
+    "DisableAppUpdate": true
+  }
+}
+EOF
+}
