@@ -8,6 +8,7 @@ license="GPL-3.0-only"
 homepage="https://bitwarden.com"
 distfiles="https://github.com/bitwarden/clients/releases/download/desktop-v${version}/Bitwarden-${version}-amd64.deb"
 checksum="2ea59874bac7f67f5663828d028449168050d4538b5e6adea69e13b199249226"
+hostmakedepends="desktop-file-utils"
 depends="alsa-lib gtk+3 libnotify libXtst libXScrnSaver nss"
 nopie=yes
 
