@@ -20,10 +20,6 @@ do_install() {
 	desktop-file-edit --set-key=Exec --set-value="bitwarden %U" \
 		"${DESTDIR}/usr/share/applications/bitwarden.desktop"
 
-	# install our own desktop and icon from files/
-	vinstall ${FILESDIR}/bitwarden.desktop 644 usr/share/applications
-	vinstall ${FILESDIR}/bitwarden.png 644 usr/share/icons/hicolor/256x256/apps
-
 	# apparmor profile symlink
 	vmkdir etc/apparmor.d
 	ln -s /opt/Bitwarden/resources/apparmor-profile \
