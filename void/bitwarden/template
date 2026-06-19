@@ -13,7 +13,7 @@ nopie=yes
 
 do_install() {
 	# extract deb
-	bsdtar xf data.tar.xz -C "${DESTDIR}/"
+	cp -r ./* "${DESTDIR}/"
 
 	# fix exec in desktop file
 	desktop-file-edit --set-key=Exec --set-value="bitwarden %U" \
