@@ -11,23 +11,27 @@ checksum="2ea59874bac7f67f5663828d028449168050d4538b5e6adea69e13b199249226"
 hostmakedepends="desktop-file-utils"
 depends="alsa-lib gtk+3 libnotify libXtst libXScrnSaver nss"
 nopie=yes
+nostrip=yes
 
 do_install() {
-	# extract deb
-	cp -r ./* "${DESTDIR}/"
+    # extract deb
+    cp -r ./* "${DESTDIR}/"
 
-	# fix exec in desktop file
-	desktop-file-edit --set-key=Exec --set-value="bitwarden %U" \
-		"${DESTDIR}/usr/share/applications/bitwarden.desktop"
+    # Fix exec in desktop file
+    desktop-file-edit --set-key=Exec --set-value="bitwarden %U" \
+        "${DESTDIR}/usr/share/applications/bitwarden.desktop"
 
-	# apparmor profile symlink
-	vmkdir etc/apparmor.d
-	ln -s /opt/Bitwarden/resources/apparmor-profile \
-		"${DESTDIR}/etc/apparmor.d/bitwarden"
+    # apparmor profile symlink
+    vmmkdir etc/apparmor.d
+    ln -s /opt/Bitwarden/resources/apparmor-profile \
+        "${DESTDIR}/etc/apparmor.d/bitwarden"
 
-	# chrome sandbox needs setuid
-	chmod 04755 "${DESTDIR}/opt/Bitwarden/chrome-sandbox"
+    # chrome sandbox needs setuid
+    chmod 04755 "${DESTDIR}/opt/Bitwarden/chrome-sandbox"
 
-	# launcher script
-	vinstall ${FILESDIR}/bitwarden.sh 755 usr/bin bitwarden
+    # launcher script
+    vinstall ${FILESDIR}/bitwarden.sh 755 usr/bin bitwarden
+
+    # Clean out unwanted upstream musl binaries that break glibc shlibs tracking
+    find "${DESTDIR}" -type f -name "*musl*" -delete
 }
