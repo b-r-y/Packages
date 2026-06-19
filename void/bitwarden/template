@@ -22,7 +22,7 @@ do_install() {
         "${DESTDIR}/usr/share/applications/bitwarden.desktop"
 
     # apparmor profile symlink
-    vmmkdir etc/apparmor.d
+    vmkdir etc/apparmor.d
     ln -s /opt/Bitwarden/resources/apparmor-profile \
         "${DESTDIR}/etc/apparmor.d/bitwarden"
 
