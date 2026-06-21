@@ -1,0 +1,63 @@
+# Template file for 'noctalia'
+pkgname=noctalia
+version=5.0.0.r2026.06.19.f977911
+revision=1
+archs="*-musl"
+build_style=meson
+short_desc="Noctalia desktop shell"
+maintainer="Noctalia <team@enoctalia.dev>"
+license="MIT"
+homepage="https://github.com/noctalia-dev/noctalia-shell"
+
+hostmakedepends="meson ninja pkg-config git"
+
+makedepends="
+ wayland-devel
+ wayland-protocols
+ libepoxy-devel
+ MesaLibs-devel
+ cairo-devel
+ pango-devel
+ fontconfig-devel
+ freetype-devel
+ harfbuzz-devel
+ libxkbcommon-devel
+ pipewire-devel
+ libcurl-devel
+ pam-devel
+ libwebp-devel
+ basu-devel
+ sdbus-c++-devel
+ polkit-devel
+ librsvg-devel
+ jemalloc-devel
+ libxml2-devel
+ libqalculate-devel
+"
+
+depends="
+ wayland
+ pipewire
+ pam
+ libwebp
+ basu
+ jemalloc
+"
+
+CXXFLAGS+=" -std=c++23"
+
+do_fetch() {
+	git clone https://github.com/noctalia-dev/noctalia.git ${wrksrc}
+	cd ${wrksrc}
+	git checkout ${version##*.}
+}
+
+post_install() {
+	if [ -f LICENSE ]; then
+		vlicense LICENSE
+	fi
+
+	if [ ! -x "${DESTDIR}/usr/bin/noctalia" ]; then
+		msg_error "Expected binary /usr/bin/noctalia not found.\n"
+	fi
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+COMMIT_JSON=$(curl -sL "https://api.github.com/repos/noctalia-dev/noctalia/commits/main")
+
+if [ -z "$COMMIT_JSON" ]; then
+    exit 1
+fi
+
+SHA=$(echo "$COMMIT_JSON" | sed -n 's/.*"sha": "\([^"]*\)".*/\1/p' | head -n 1 | cut -c 1-7)
+DATE=$(echo "$COMMIT_JSON" | sed -n 's/.*"date": "\([^"]*\)".*/\1/p' | head -n 1 | cut -d'T' -f1 | tr '-' '.')
+NEW_VERSION="5.0.0.r${DATE}.${SHA}"
+
+if [ "$version" != "$NEW_VERSION" ]; then
+    echo "noctalia-${version} -> noctalia-${NEW_VERSION}"
+fi

@@ -8,6 +8,7 @@ on:
       - 'arch/**'
       - 'fedora/**'
       - 'void/**'
+      - 'void-musl/**'
   workflow_dispatch:
     inputs:
       skip_packages:
@@ -785,3 +786,321 @@ jobs:
           done
           
           echo "Void packages uploaded successfully"
+
+  build-void-musl:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/void-linux/void-musl-full:latest
+      options: --privileged
+      volumes:
+        - /dev:/dev
+    steps:
+      - name: Prepare container
+        run: |
+          printf '\033[1;34m==> Stage: Prepare container (Void musl)\033[0m\n'
+          mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
+          sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
+          xbps-install -Syu xbps
+          xbps-install -y sudo bash curl git libstdc++
+          useradd -G xbuilder -M builder
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download existing release info
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          xbps-install -y github-cli
+          mkdir -p /tmp/existing-packages
+
+          # Download list of existing packages from release
+          if gh -R "$GITHUB_REPOSITORY" release view void-musl-repo --json assets --jq '.assets[].name' > /tmp/existing-packages/void-musl-list.txt 2>/dev/null; then
+            echo "Found existing void-musl-repo release"
+            cat /tmp/existing-packages/void-musl-list.txt
+          else
+            echo "No existing void-musl-repo release found"
+            touch /tmp/existing-packages/void-musl-list.txt
+          fi
+
+      - name: Build Void musl packages
+        run: |
+          printf '\033[1;34m==> Stage: Build Void musl packages\033[0m\n'
+          SKIP_INPUT="${{ github.event.inputs.skip_packages }}"
+          SKIP_IF_OTHER="${{ github.event.inputs.skip_if_in_other_repos }}"
+
+          VOID_MUSL_DIR=$(pwd)/void-musl
+
+          git clone --depth=1 https://github.com/void-linux/void-packages.git /void-packages
+          for pkg_path in "$VOID_MUSL_DIR"/*/; do
+            pkg=$(basename "$pkg_path")
+            rm -rf "/void-packages/srcpkgs/$pkg"
+          done
+          cd /void-packages
+          echo XBPS_BUILD_ENVIRONMENT=void-packages-ci >> etc/conf
+          echo XBPS_CHROOT_CMD=uchroot >> etc/conf
+          echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+
+          cp -r "$VOID_MUSL_DIR"/* srcpkgs/
+
+          chown -R builder:builder /void-packages
+          sudo -Eu builder ./xbps-src -A x86_64-musl binary-bootstrap
+
+          sudo -Eu builder mkdir -p /void-packages/etc/xbps.d/custom
+          sudo -Eu builder tee /void-packages/etc/xbps.d/custom/urepo.conf << 'EOF'
+          repository=https://universalrepository.pages.dev/void-musl
+          EOF
+          sudo -Eu builder mkdir -p /void-packages/masterdir-x86_64-musl/var/db/xbps/keys
+          sudo -Eu builder tee masterdir-x86_64-musl/var/db/xbps/keys/d3:aa:73:7a:f7:f4:d4:74:05:e5:ca:c8:63:84:73:a7.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+                  <key>public-key</key>
+                  <data>LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUFvUmRwZDZzTURyWFFVWlllZGwxWQpKSFNDclVSOURWNkRiSXcxMjBDdjczemtvc2QzODc5NWFGYWNZR05EaXV4SGNKanQ2R0NhbjlHQ2VtVC8raVU0CjBNbTl4dHY2Z2Jnemx6VEcwaXNEcFduL2YyWnM3S3d5ek1wWFRXK1ZxSGd1UzhNQVo3K2FZWVRqNWdyOVFqei8KL0tzWTU1Q2dGSnk1NzBxYzVxV05EUVpKL0pkNG1rMHh1bFlzREgrbmtiTG1qczlKVDhPTUd6b1NpVVhtelM4SQphRWRzam5SZkFQNGgvM1BzK2F0elNQWFpxSVFmcU9TTHZSYU4ydzNvWXJvZm9PZGxXVkpXaUtpeXVZY2toUDRXClVtUWkzNFptTm9oMk40eFpaZHdKKzNId1JXVGYzV1BjWHhhdzV2ZjAxbVRKSFhsVDNkNncvUG41ME1oTHB3SzUKa0pVVFFsMzFmdE9mRlF2Tnh2UkFuSzhLNk16ZFpacXJ3SVJ4cld1Y2d3N3Z4bWJMamdCMVN3Wk1lMkNIYVZyWgpkRGtETlNSL21RTDZBSzRDZ3dTdXlMUTd2U3h1dmRGWDFoWTlDWHVPcjJTWW1CUHBRVWlkN0F0bThhRVg0aitICk55Zm9CekZEelF1VjREN1VZbkk5NC9PY2VnTmNRcTNuNFczUFpVUDloYy9VWEpLaGZCNnlTc2dVU1FUWWgwN2YKRG1OejRuRm9sSi9IUC9VK20rR05zUUV0L2l1OGtKOTJrdlZQeDFuY2tUMWR2NklTdWJQR2poNVhMQy80ZUEybgpDb1BGNTBSa1BLQkpEUW15andUcUc2dVFzMmRFdkU4TU1VdE9jdWljblFyczJNV1NkL2xPVDQ3T3RNSmtjNGVUCmdPWU4rN3E5dmFYQjlaUEU0ZkQzQVhrQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=</data>
+                  <key>public-key-size</key>
+                  <integer>4096</integer>
+                  <key>signature-by</key>
+                  <string>Universal Repository CI &lt;ci@universalrepo.local&gt;</string>
+          </dict>
+          </plist>
+          EOF
+
+          xbps-install -S
+          sudo -Eu builder xbps-install -r /void-packages/masterdir-x86_64-musl jq curl -y
+
+          # Merge custom shlibs
+          sudo -Eu builder bash -c '
+          while IFS= read -r line; do
+              [[ -z "$line" ]] && continue
+              lib=$(echo "$line" | awk "{print \$1}")
+              base=$(echo "$lib" | sed "s/\.so\.[0-9][0-9.]*$//")
+              sed -i "/^${base}\.so\./d" /void-packages/common/shlibs
+              echo "$line" >> /void-packages/common/shlibs
+            done < '"$VOID_MUSL_DIR"'/../common/shlibs
+          '
+
+          mkdir -p /tmp/built-packages
+
+          for pkgdir in "$VOID_MUSL_DIR"/*; do
+            [ -d "$pkgdir" ] || continue
+            pkgname=$(basename "$pkgdir")
+            case "$pkgname" in _*) echo "Skipping $pkgname"; continue ;; esac
+            [ -f "$pkgdir/template" ] || continue
+
+            # Skip packages provided from workflow_dispatch input
+            if [ -n "$SKIP_INPUT" ]; then
+              echo ",$SKIP_INPUT," | grep -q ",$pkgname," && {
+                echo "Package $pkgname is in skip list, skipping"
+                continue
+              }
+            fi
+
+            # Extract version and revision from template without sourcing
+            version=$(grep '^version=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            revision=$(grep '^revision=' "$pkgdir/template" | head -1 | cut -d'=' -f2)
+            pkgver_full="${pkgname}-${version}_${revision}"
+
+            # Check if package already exists in release
+            if grep -q "^${pkgname}-${version}_${revision}.*\.xbps$" /tmp/existing-packages/void-musl-list.txt 2>/dev/null; then
+              echo "Package $pkgver_full already exists in release, skipping"
+              continue
+            fi
+
+            echo "Building Void musl package: $pkgver_full"
+
+            # Copy template to srcpkgs
+            mkdir -p /void-packages/srcpkgs/$pkgname
+            cp "$pkgdir/template" /void-packages/srcpkgs/$pkgname/
+            chown -R builder:builder /void-packages/srcpkgs/$pkgname
+
+            # Build package targeting musl masterdir
+            sudo -Eu builder sh -c "cd /void-packages && ./xbps-src -A x86_64-musl -E pkg $pkgname"
+
+            # Copy built packages to temp directory
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps" -exec cp {} /tmp/built-packages/ \;
+            find /void-packages/hostdir/binpkgs -name "${pkgname}-*.xbps.sig*" -exec cp {} /tmp/built-packages/ \; 2>/dev/null || true
+
+            echo "Built packages:"
+            ls -lh /tmp/built-packages/*.xbps 2>/dev/null || echo "No packages found"
+          done
+
+          echo "All built packages:"
+          ls -lh /tmp/built-packages/
+
+      - name: Create Void musl repository index
+        if: always() && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '\033[1;34m==> Stage: Create Void musl repository index\033[0m\n'
+          WORK_DIR=/tmp/void-musl-repo-packages
+          mkdir -p "$WORK_DIR"
+
+          # Start from existing release assets so repodata contains all published packages
+          if gh -R "$GITHUB_REPOSITORY" release view void-musl-repo >/dev/null 2>&1; then
+            echo "Downloading existing void-musl-repo assets..."
+            gh -R "$GITHUB_REPOSITORY" release download void-musl-repo -D "$WORK_DIR" -p '*.xbps' -p '*.xbps.sig' -p '*.xbps.sig2' || true
+          fi
+
+          # Overlay with newly built packages
+          cp /tmp/built-packages/*.xbps "$WORK_DIR"/ 2>/dev/null || true
+          cp /tmp/built-packages/*.xbps.sig "$WORK_DIR"/ 2>/dev/null || true
+          cp /tmp/built-packages/*.xbps.sig2 "$WORK_DIR"/ 2>/dev/null || true
+
+          # Keep only newest built version per package in index input
+          parse_void_pkg() {
+            local file="$1"
+            local base arch verrev name
+            base="${file%.xbps}"
+            arch="${base##*.}"
+            base="${base%.*}"
+            verrev="${base##*-}"
+            name="${base%-*}"
+            printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
+          }
+
+          for newpkg in /tmp/built-packages/*.xbps; do
+            [ -f "$newpkg" ] || continue
+            newfile=$(basename "$newpkg")
+            IFS='|' read -r new_name new_verrev _ <<< "$(parse_void_pkg "$newfile")"
+
+            for existing in "$WORK_DIR"/*.xbps; do
+              [ -f "$existing" ] || continue
+              existing_file=$(basename "$existing")
+              IFS='|' read -r existing_name existing_verrev _ <<< "$(parse_void_pkg "$existing_file")"
+              [ "$existing_name" = "$new_name" ] || continue
+              [ "$existing_verrev" = "$new_verrev" ] && continue
+
+              echo "Void musl index: removing old $existing_file (replaced by $newfile)"
+              rm -f "$WORK_DIR/$existing_file" "$WORK_DIR/$existing_file.sig" "$WORK_DIR/$existing_file.sig2"
+            done
+          done
+
+          if ! ls "$WORK_DIR"/*.xbps 1>/dev/null 2>&1; then
+            echo "No Void musl packages available to index, skipping"
+            exit 0
+          fi
+
+          cd "$WORK_DIR"
+          XBPS_ARCH=x86_64-musl xbps-rindex -a *.xbps
+
+          if [ -n "${{ secrets.XBPS_PRIVATE_KEY }}" ]; then
+            echo "Signing Void musl packages and repository metadata..."
+            mkdir -p /tmp/xbps-sign
+            printf '%s\n' "${{ secrets.XBPS_PRIVATE_KEY }}" > /tmp/xbps-sign/id_rsa
+            chmod 600 /tmp/xbps-sign/id_rsa
+
+            for p in *.xbps; do
+              xbps-rindex --privkey /tmp/xbps-sign/id_rsa -S "$p" || true
+            done
+            XBPS_ARCH=x86_64-musl xbps-rindex --signedby 'Universal Repository CI <ci@universalrepo.local>' --privkey /tmp/xbps-sign/id_rsa -s . || true
+            rm -rf /tmp/xbps-sign
+          else
+            echo "XBPS_PRIVATE_KEY secret not set; skipping Void musl package signing"
+          fi
+
+          echo "Repository index created"
+          ls -lh
+
+      - name: Upload Void musl packages to release
+        if: always() && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '\033[1;34m==> Stage: Upload Void musl packages to release\033[0m\n'
+
+          WORK_DIR=/tmp/void-musl-repo-packages
+          if ! ls /tmp/built-packages/*.xbps 1>/dev/null 2>&1; then
+            echo "No newly built Void musl packages to upload"
+            exit 0
+          fi
+
+          # Fix git ownership issue in GitHub Actions
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          RELEASE_TAG="void-musl-repo"
+          RELEASE_NAME="Void Linux musl Repository"
+
+          # Check if release exists
+          if gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists"
+          else
+            echo "Creating release $RELEASE_TAG"
+            gh -R "$GITHUB_REPOSITORY" release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Void Linux musl packages repository. Updated automatically by CI." \
+              --prerelease
+          fi
+
+          cd /tmp/built-packages
+
+          # Parse package name and version from filename
+          parse_void_pkg() {
+            local file="$1"
+            local base arch verrev name
+            base="${file%.xbps}"
+            arch="${base##*.}"
+            base="${base%.*}"
+            verrev="${base##*-}"
+            name="${base%-*}"
+            printf '%s|%s|%s\n' "$name" "$verrev" "$arch"
+          }
+
+          # Delete old versions of rebuilt packages from release
+          for pkg in *.xbps; do
+            [ -f "$pkg" ] || continue
+            pkgfile=$(basename "$pkg")
+            IFS='|' read -r name verrev _ <<< "$(parse_void_pkg "$pkgfile")"
+
+            gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+              if [[ "$asset" == "${name}-"*.xbps* ]]; then
+                IFS='|' read -r asset_name asset_verrev _ <<< "$(parse_void_pkg "$asset")"
+                if [ "$asset_name" = "$name" ] && [ "$asset_verrev" != "$verrev" ]; then
+                  echo "Deleting old version: $asset"
+                  gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
+                fi
+              fi
+            done
+          done
+
+          # Remove old repository metadata assets before uploading fresh metadata
+          gh -R "$GITHUB_REPOSITORY" release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+            if [[ "$asset" == *-repodata ]]; then
+              echo "Deleting stale metadata asset: $asset"
+              gh -R "$GITHUB_REPOSITORY" release delete-asset "$RELEASE_TAG" "$asset" -y || true
+            fi
+          done
+
+          # Upload newly built packages and signatures
+          for pkg in *.xbps; do
+            [ -f "$pkg" ] || continue
+            echo "Uploading $pkg"
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg" --clobber
+            if [ -f "$WORK_DIR/$pkg.sig" ]; then
+              echo "Uploading $pkg.sig"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$WORK_DIR/$pkg.sig" --clobber
+            elif [ -f "$pkg.sig" ]; then
+              echo "Uploading $pkg.sig"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig" --clobber
+            fi
+            if [ -f "$WORK_DIR/$pkg.sig2" ]; then
+              echo "Uploading $pkg.sig2"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$WORK_DIR/$pkg.sig2" --clobber
+            elif [ -f "$pkg.sig2" ]; then
+              echo "Uploading $pkg.sig2"
+              gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$pkg.sig2" --clobber
+            fi
+          done
+
+          # Upload repository index files generated from full merged set
+          echo "Uploading repository index"
+          for idx in "$WORK_DIR"/*-repodata; do
+            [ -f "$idx" ] || continue
+            gh -R "$GITHUB_REPOSITORY" release upload "$RELEASE_TAG" "$idx" --clobber
+          done
+
+          echo "Void musl packages uploaded successfully"

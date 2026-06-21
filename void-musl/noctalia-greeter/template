@@ -1,0 +1,55 @@
+# this template for 'noctalia-greeter'
+
+pkgname=noctalia-greeter
+version=0.0.1.r2026.06.16.773e322
+revision=1
+build_style=meson
+#configure_args="-Dbuildtype=release"
+short_desc="Noctalia themed greeter for greetd"
+maintainer="Noctalia <team@enoctalia.dev>"
+license="MIT"
+homepage="https://github.com/noctalia-dev/noctalia-greeter"
+
+hostmakedepends="meson ninja pkg-config git"
+
+makedepends="
+ wayland-devel
+ wlroots0.20-devel
+ wayland-protocols
+ libepoxy-devel
+ MesaLib-devel
+ libglvnd-devel
+ cairo-devel
+ pango-devel
+ fontconfig-devel
+ freetype-devel
+ libxkbcommon-devel
+ librsvg-devel
+ libwebp-devel
+"
+
+depends="
+ greetd
+ cage
+ wlr-randr
+ dbus
+ polkit
+"
+
+CXXFLAGS+=" -std=c++20"
+
+do_fetch() {
+        git clone https://github.com/noctalia-dev/noctalia-greeter.git --branch main ${wrksrc}
+        cd ${wrksrc}
+        git checkout ${version##*.}
+}
+
+post_install() {
+        if [ -f LICENSE ]; then
+                vlicense LICENSE
+        fi
+
+        if [ ! -x "${DESTDIR}/usr/bin/noctalia-greeter-session" ]; then
+                msg_error "Expected binary /usr/bin/noctalia-greeter-session not found.\n"
+        fi
+}

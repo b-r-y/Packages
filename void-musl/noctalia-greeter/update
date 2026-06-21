@@ -1,0 +1,15 @@
+#!/bin/sh
+COMMIT_JSON=$(curl -sL "https://api.github.com/repos/noctalia-dev/noctalia-greeter/commits/main")
+
+if [ -z "$COMMIT_JSON" ]; then
+    exit 1
+fi
+
+SHA=$(echo "$COMMIT_JSON" | sed -n '/"sha":/s/.*"sha": "\([^"]*\)".*/\1/p' | head -n 1 | cut -c 1-7)
+DATE=$(echo "$COMMIT_JSON" | sed -n '/"date":/s/.*"date": "\([^"T]*\).*/\1/p' | head -n 1 | tr '-' '.')
+
+NEW_VERSION="0.0.1.r${DATE}.${SHA}"
+
+if [ "$version" != "$NEW_VERSION" ]; then
+    echo "noctalia-greeter-${version} -> noctalia-greeter-${NEW_VERSION}"
+fi
