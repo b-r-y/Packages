@@ -15,7 +15,7 @@ makedepends="
  wayland-devel
  wayland-protocols
  libepoxy-devel
- MesaLibs-devel
+ MesaLib-devel
  cairo-devel
  pango-devel
  fontconfig-devel
