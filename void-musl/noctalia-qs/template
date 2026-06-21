@@ -11,7 +11,7 @@ checksum=5de37541537307d141618aa0d782d3c34e42a6ad21c73533cce80c0e71ee9693
 
 build_style=cmake
 
-archs="x86_64 aarch64"
+archs="x86_64-musl aarch64-musl"
 
 hostmakedepends="
  cmake

@@ -9,7 +9,7 @@ homepage="https://github.com/noctalia-dev/noctalia-shell"
 distfiles="$homepage/archive/v${version}.tar.gz"
 checksum=1189099030b24097d2a351015d2f0290f2ff03dfc928dc4c4191cbace2b7b2ad
 
-archs="x86_64 aarch64"
+archs="x86_64-musl aarch64-musl"
 
 hostmakedepends="git"
 
