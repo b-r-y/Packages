@@ -801,11 +801,16 @@ jobs:
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
           xbps-install -Syu xbps
-          xbps-install -y sudo bash curl git libstdc++ nodejs
+          xbps-install -y sudo bash curl git libstdc++
           useradd -G xbuilder -M builder
 
       - name: Checkout
-        uses: actions/checkout@v4
+        run: |
+          git clone --depth=1 \
+            --branch "${GITHUB_REF_NAME}" \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
+            "${GITHUB_WORKSPACE}"
+          git -C "${GITHUB_WORKSPACE}" checkout "${GITHUB_SHA}"
 
       - name: Download existing release info
         shell: bash
