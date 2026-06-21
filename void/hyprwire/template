@@ -1,7 +1,7 @@
 # Template for 'hyprwire'
 pkgname=hyprwire
 version=0.3.1
-revision=1
+revision=2
 build_style=cmake
 short_desc="IPC library for Hyprland"
 maintainer="Rain Xelelo <rxelelo@outlook.com>"
@@ -15,6 +15,7 @@ build_options="clang gcc"
 build_options_default="clang"
 desc_option_clang="Use clang to build" 
 desc_option_gcc="Use gcc to build"
+shlib_proivdes="libhyprwire.so.3"
 
 if [ "$build_option_gcc" ]; then
 	hostmakedepends+=" gcc"

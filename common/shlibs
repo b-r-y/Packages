@@ -1,12 +1,5 @@
 libspng.so.0 libspng-0.7.4_1
 libsdbus-c++.so.2 sdbus-c++-2.2.1_1
-libhyprutils.so.12 hyprutils-0.13.1_1
-libhyprlang.so.2 hyprlang-0.6.8_1
-libhyprgraphics.so.4 hyprgraphics-0.5.1_1
-libhyprtoolkit.so.5 hyprtoolkit-0.5.4_1
-libaquamarine.so.11 aquamarine-0.12.0_1
-libhyprcursor.so.0 hyprcursor-0.1.13_1
-libhyprwire.so.3 hyprwire-0.3.1_1
 liblua5.5.so.5.5 lua55-5.5.0_1
 libpcap.so.0.8 cloudflare-warp-2026.4.1350_1
 libgo.so.25 libgo-16.1.0_1
