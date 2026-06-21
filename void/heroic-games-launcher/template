@@ -1,7 +1,7 @@
 # Template file for 'heroic-games-launcher'
 pkgname=heroic-games-launcher
 version=2.22.0
-revision=1
+revision=2
 short_desc="Native GOG, Epic Games and Amazon games launcher for Linux"
 maintainer="Rain Xelelo <rXelelo@outlook.com>"
 license="GPL-3.0-only"
@@ -10,7 +10,11 @@ distfiles="https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/archive/
 checksum="a4122c4e39a8e240cf86ee73d6c8c57632ca638284b71faffbf8e62237bf3725"
 hostmakedepends="nodejs pnpm python3 desktop-file-utils electron35"
 depends="electron35 zlib libgcc"
-nopie_files="/usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/comet /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/gogdl /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/legendary /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/nile /usr/lib/heroic/app.asar.unpacked/build/bin/x64/linux/vulkan-helper"
+nopie_files="/usr/lib/heroic/app.asar.unpacked/public/bin/x64/linux/comet \
+/usr/lib/heroic/app.asar.unpacked/public/bin/x64/linux/gogdl \
+/usr/lib/heroic/app.asar.unpacked/public/bin/x64/linux/legendary \
+/usr/lib/heroic/app.asar.unpacked/public/bin/x64/linux/nile \
+/usr/lib/heroic/app.asar.unpacked/public/bin/x64/linux/vulkan-helper"
 
 do_build() {
 	HOME="${wrksrc}/.electron-gyp" pnpm install
@@ -40,4 +44,5 @@ EOF
 		--set-key=StartupWMClass --set-value=heroic \
 		flatpak/com.heroicgameslauncher.hgl.desktop
 	vinstall flatpak/com.heroicgameslauncher.hgl.desktop 644 usr/share/applications
+	mv ${DESTDIR}/usr/lib/heroic/app.asar.unpacked/build ${DESTDIR}/usr/lib/heroic/app.asar.unpacked/public
 }
