@@ -805,11 +805,14 @@ jobs:
           useradd -G xbuilder -M builder
 
       - name: Checkout
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           git clone --depth=1 \
-            --branch "${GITHUB_REF_NAME}" \
-            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
             "${GITHUB_WORKSPACE}"
+          git -C "${GITHUB_WORKSPACE}" fetch --depth=1 origin "${GITHUB_SHA}"
           git -C "${GITHUB_WORKSPACE}" checkout "${GITHUB_SHA}"
 
       - name: Download existing release info
