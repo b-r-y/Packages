@@ -8,14 +8,14 @@ on:
 jobs:
   update-void:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     container:
       image: ghcr.io/void-linux/void-glibc-full:latest
       options: --privileged
       volumes:
         - /dev:/dev
-
+    outputs:
+      has_updates: ${{ steps.autoupdate.outputs.has_updates }}
+      updated_packages: ${{ steps.autoupdate.outputs.updated_packages }}
     steps:
       - name: Prepare container
         run: |
@@ -29,8 +29,6 @@ jobs:
           useradd -G xbuilder -M builder
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Link workspace to /work/packages
         run: |
@@ -95,24 +93,24 @@ jobs:
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
             echo "updated_packages=" >> "$GITHUB_OUTPUT"
           fi
-      - name: Commit and push updates
+      - name: Upload updated templates
         if: steps.autoupdate.outputs.has_updates == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: "void: auto-update ${{ steps.autoupdate.outputs.updated_packages }}"
-          file_pattern: void/
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: updated-void-templates
+          path: void/
+          retention-days: 1
 
   update-void-musl:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     container:
       image: ghcr.io/void-linux/void-musl-full:latest
       options: --privileged
       volumes:
         - /dev:/dev
-
+    outputs:
+      has_updates: ${{ steps.autoupdate.outputs.has_updates }}
+      updated_packages: ${{ steps.autoupdate.outputs.updated_packages }}
     steps:
       - name: Prepare container
         run: |
@@ -199,10 +197,62 @@ jobs:
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
             echo "updated_packages=" >> "$GITHUB_OUTPUT"
           fi
-      - name: Commit and push updates
+      - name: Upload updated templates
         if: steps.autoupdate.outputs.has_updates == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: "void-musl: auto-update ${{ steps.autoupdate.outputs.updated_packages }}"
-          file_pattern: void-musl/
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: updated-void-musl-templates
+          path: void-musl/
+          retention-days: 1
+
+  commit:
+    needs: [update-void, update-void-musl]
+    if: needs.update-void.outputs.has_updates == 'true' || needs.update-void-musl.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download void templates artifact
+        if: needs.update-void.outputs.has_updates == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: updated-void-templates
+          path: void/
+
+      - name: Download void-musl templates artifact
+        if: needs.update-void-musl.outputs.has_updates == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: updated-void-musl-templates
+          path: void-musl/
+
+      - name: Commit and push updates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          MSG_PARTS=()
+          if [ "${{ needs.update-void.outputs.has_updates }}" = "true" ]; then
+            git add void/
+            MSG_PARTS+=("void: ${{ needs.update-void.outputs.updated_packages }}")
+          fi
+          if [ "${{ needs.update-void-musl.outputs.has_updates }}" = "true" ]; then
+            git add void-musl/
+            MSG_PARTS+=("void-musl: ${{ needs.update-void-musl.outputs.updated_packages }}")
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No staged changes, nothing to commit"
+            exit 0
+          fi
+
+          COMMIT_MSG=$(printf '%s | ' "${MSG_PARTS[@]}")
+          COMMIT_MSG="auto-update ${COMMIT_MSG% | }"
+
+          git commit -m "$COMMIT_MSG"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:"${GITHUB_REF_NAME}"
