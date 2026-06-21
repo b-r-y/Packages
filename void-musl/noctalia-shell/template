@@ -7,7 +7,7 @@ maintainer="Rain Xelelo <rXelelo@outlook.com"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
 distfiles="$homepage/archive/v${version}.tar.gz"
-checksum=1189099030b24097d2a351015d2f0290f2ff03dfc928dc4c4191cbace2b7b2ad
+checksum=05861ccfa4ae23a13a1e300d7776417076fdde7eb3d6bae8cf6eed8abbd90cdc
 
 archs="x86_64-musl aarch64-musl"
 
