@@ -1,7 +1,7 @@
 # Template file for 'hyprsysteminfo'
 pkgname=hyprsysteminfo
 version=0.2.0
-revision=3
+revision=4
 build_style=cmake
 configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release"
 hostmakedepends="cmake pkg-config"
@@ -29,39 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/hyprwm/hyprsysteminfo"
 distfiles="https://github.com/hyprwm/hyprsysteminfo/archive/refs/tags/v${version}.tar.gz"
 checksum=4f875e7e986deeda35c05090b59f11f3b5802cac8863dafcc6e8251ea37530b1
-
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build"
-desc_option_gcc="Use gcc to build"
-
-if [ "$build_option_gcc" ]; then
-   hostmakedepends+=" gcc"
-   makedepends+=" libgcc-devel fmt-devel"
-fi
-
-if [ "$build_option_clang" ]; then
-   hostmakedepends+=" clang21"
-   makedepends+=""
-fi
-
-_apply_patch() {
-   local args="$1" pname="$(basename $2)"
-
-   if [ ! -f ".${pname}_done" ]; then
-      patch -N $args -i $2
-      touch .${pname}_done
-   fi
-}
-
-pre_configure() {
-   if [ "$build_option_clang" ]; then
-      export CC=clang
-      export CXX=clang++
-
-      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-   fi
-}
+hostmakedepends+=" gcc"
+makedepends+=" libgcc-devel fmt-devel"
 
 post_install() {
    vlicense LICENSE

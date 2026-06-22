@@ -14,7 +14,6 @@ nopie=yes
 nostrip=yes
 
 do_install() {
-    # extract deb
     cp -r ./* "${DESTDIR}/"
 
     # Fix exec in desktop file

@@ -1,7 +1,7 @@
 # Template file for 'aquamarine'
 pkgname=aquamarine
 version=0.12.1
-revision=1
+revision=3
 build_style=cmake
 configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release"
 hostmakedepends="cmake pkg-config"
@@ -27,30 +27,8 @@ homepage="https://hyprland.org/hyprlang/index.html"
 changelog="https://github.com/hyprwm/aquamarine/releases"
 distfiles="https://github.com/hyprwm/aquamarine/archive/refs/tags/v${version}.tar.gz"
 checksum=80120257c983e18dec78c4df03246931b1bca1e44e50fb41ca21bad772479bd9
-
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build"
-desc_option_gcc="Use gcc to build"
-
-if [ "$build_option_gcc" ]; then
-   hostmakedepends+=" gcc"
-   makedepends+=" libgcc-devel fmt-devel"
-fi
-
-if [ "$build_option_clang" ]; then
-   hostmakedepends+=" clang21"
-   makedepends+=""
-fi
-
-pre_configure() {
-   if [ "$build_option_clang" ]; then
-      export CC=clang
-      export CXX=clang++
-
-      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-   fi
-}
+hostmakedepends+=" gcc"
+makedepends+=" libgcc-devel fmt-devel"
 
 post_install() {
    vlicense LICENSE

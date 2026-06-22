@@ -1,7 +1,7 @@
 # Template file for 'hypridle'
 pkgname=hypridle
 version=0.1.7
-revision=2
+revision=3
 build_style=cmake
 configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release"
 hostmakedepends="cmake pkg-config"
@@ -24,41 +24,8 @@ homepage="https://github.com/hyprwm/hypridle"
 changelog="https://github.com/hyprwm/${pkgname}/releases"
 distfiles="https://github.com/hyprwm/hypridle/archive/refs/tags/v${version}.tar.gz"
 checksum=c4ef2e2894fc2082cfdabe7db086b1f246e3f0de571f7f2c6b26d7c0d9a5f8f3
-
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build"
-desc_option_gcc="Use gcc to build"
-
-if [ "$build_option_gcc" ]; then
-	hostmakedepends+=" gcc"
-	makedepends+=" libgcc-devel fmt-devel"
-fi
-
-if [ "$build_option_clang" ]; then
-	hostmakedepends+=" clang21"
-	makedepends+=""
-fi
-
-_apply_patch() {
-	local args="$1" pname="$(basename $2)"
-
-	if [ ! -f ".${pname}_done" ]; then
-		patch -N $args -i $2
-		touch .${pname}_done
-	fi
-}
-
-pre_configure() {
-	#_apply_patch -p1 ${FILESDIR}/systemd.patch
-
-	if [ "$build_option_clang" ]; then
-		export CC=clang
-		export CXX=clang++
-
-		configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-	fi
-}
+hostmakedepends+=" gcc"
+makedepends+=" libgcc-devel fmt-devel"
 
 post_install() {
 	vlicense LICENSE
