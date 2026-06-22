@@ -19,7 +19,7 @@ makedepends="
 	libjpeg-turbo-devel
 	wayland-devel
 	wayland-protocols
-	wlroots-devel
+	wlroots0.20-devel
 	libwebp-devel
 	file-devel
 "
