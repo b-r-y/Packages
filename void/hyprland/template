@@ -77,7 +77,7 @@ homepage="https://hyprland.org/"
 changelog="https://github.com/hyprwm/Hyprland/releases"
 distfiles="https://github.com/hyprwm/Hyprland/releases/download/v${version}/source-v${version}.tar.gz"
 checksum=10cdda47e6a42e603a646ffda89c9fca0628c3a8211e2fbbee02f6282effe30b
-hostmakedepends+=" gcc>=16"
+hostmakedepends+=" gcc"
 makedepends+=" libgcc-devel fmt-devel"
 
 if [ "$XBPS_TARGET_LIBC" = "glibc" ]; then
