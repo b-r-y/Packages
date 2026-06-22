@@ -11,6 +11,7 @@ makedepends="
    qt6-declarative-devel
    qt6-base-devel
    qt6-tools-devel
+   qt6-wayland-private-devel
 "
 depends="
    hyprlang
@@ -27,6 +28,10 @@ distfiles="https://github.com/hyprwm/hyprland-qt-support/archive/refs/tags/v${ve
 checksum="cac1f980bd088b890097f3f999cfdf03e73ee94c53f3c92d0b3bc23baa9e7b2c"
 hostmakedepends+=" gcc"
 makedepends+=" libgcc-devel fmt-devel"
+
+pre_configure() {
+   sed -i 's/ Qt6::WaylandClientPrivate//' utils/dialog/CMakeLists.txt utils/update-screen/CMakeLists.txt utils/donate-screen/CMakeLists.txt
+}
 
 post_install() {
    vlicense LICENSE
