@@ -28,6 +28,11 @@ checksum=c02e47c9f720c20a5adca1baebbcfee0db5d3d36ce9595779563a2e5d27bafca
 hostmakedepends+=" gcc"
 makedepends+=" libgcc-devel fmt-devel"
 
+pre_configure() {
+   sed -i 's/ Qt6::WaylandClientPrivate//' utils/dialog/CMakeLists.txt utils/update-screen/CMakeLists.txt utils/donate-screen/CMakeLists.txt
+}
+
+
 post_install() {
    vlicense LICENSE
 }
