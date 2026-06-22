@@ -1,7 +1,7 @@
 # Template file for 'aquamarine'
 pkgname=aquamarine
 version=0.12.1
-revision=2
+revision=3
 build_style=cmake
 configure_args=" --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release"
 hostmakedepends="cmake pkg-config"
@@ -27,7 +27,6 @@ homepage="https://hyprland.org/hyprlang/index.html"
 changelog="https://github.com/hyprwm/aquamarine/releases"
 distfiles="https://github.com/hyprwm/aquamarine/archive/refs/tags/v${version}.tar.gz"
 checksum=80120257c983e18dec78c4df03246931b1bca1e44e50fb41ca21bad772479bd9
-shlib_provides="libaquamarine.so.11"
 hostmakedepends+=" gcc"
 makedepends+=" libgcc-devel fmt-devel"
 

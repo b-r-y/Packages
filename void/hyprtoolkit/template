@@ -1,7 +1,7 @@
 # Template for 'hyprtoolkit'
 pkgname=hyprtoolkit
 version=0.5.4
-revision=4
+revision=5
 build_style=cmake
 short_desc="Toolkit library for Hyprland ecosystem"
 maintainer="Rain Xelelo <rxelelo@outlook.com>"
@@ -11,41 +11,7 @@ hostmakedepends="cmake ninja pkg-config"
 makedepends="cairo-devel glib-devel MesaLib-devel libglvnd-devel hyprgraphics hyprlang-devel hyprutils-devel iniparser-devel pango-devel pixman-devel wayland-devel libxkbcommon-devel libdrm-devel hyprwayland-scanner aquamarine-devel wayland-protocols"
 distfiles="https://github.com/hyprwm/hyprtoolkit/archive/refs/tags/v${version}.tar.gz"
 checksum=2fb59789f231c1c4e9154ceffc1e7524c0cae154807c0d57e6166806255b570f
-shlib_provides="libhyprtoolkit.so.5"
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build"
-desc_option_gcc="Use gcc to build"
-
-if [ "$build_option_gcc" ]; then
-    hostmakedepends+=" gcc"
-fi
-
-if [ "$build_option_clang" ]; then
-    hostmakedepends+=" clang21"
-fi
-
-pre_build() {
-    # Line 102: log call, just show first element
-    sed -i 's/themeDir\.value())/themeDir.value().front())/g' ${wrksrc}/src/system/Icons.cpp
-    # Line 217: log call, just show first element  
-    sed -i 's/\*inheritTheme)/inheritTheme->front())/g' ${wrksrc}/src/system/Icons.cpp
-    # Line 218: parseThemes call needs vector, undo the front() and wrap properly
-    sed -i 's/parseThemes(inheritTheme->front())/parseThemes({inheritTheme->front()})/g' ${wrksrc}/src/system/Icons.cpp
-}
-
-pre_configure() {
-   if [ "$build_option_clang" ]; then
-      export CC=clang
-      export CXX=clang++
-      export CXXFLAGS="${CXXFLAGS} -stdlib=libstdc++"
-      export LDFLAGS="${LDFLAGS} -stdlib=libstdc++"
-
-      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX \
-         -DCMAKE_CXX_STANDARD=23 \
-         -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-   fi
-}
+hostmakedepends+=" gcc"
 
 post_install() {
     vlicense LICENSE

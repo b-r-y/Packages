@@ -1,7 +1,7 @@
 # Template file for 'hyprpicker'
 pkgname=hyprpicker
 version=0.4.7
-revision=1
+revision=2
 build_style=cmake
 hostmakedepends="pkg-config hyprwayland-scanner"
 makedepends="wayland-devel wayland-protocols cairo-devel pango-devel libjpeg-turbo-devel wlroots-devel libglvnd-devel hyprutils-devel"
@@ -12,31 +12,7 @@ homepage="https://github.com/hyprwm/hyprpicker"
 changelog="https://github.com/hyprwm/hyprpicker/releases"
 distfiles="https://github.com/hyprwm/hyprpicker/archive/refs/tags/v${version}.tar.gz"
 checksum=cde02b92abe372187c9d59a7cb2ca07ede5c3e1a8c81ed8b209dc0d3ac5f0339
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build"
-desc_option_gcc="Use gcc to build"
-
-if [ "$build_option_gcc" ]; then
-	hostmakedepends+=" gcc"
-fi
-
-if [ "$build_option_clang" ]; then
-	hostmakedepends+=" clang21"
-fi
-
-pre_configure() {
-   #if [ "$build_option_gcc" ]; then
-   #   _apply_patch -p1 ${FILESDIR}/gcc.patch
-   #fi
-  
-   if [ "$build_option_clang" ]; then
-      export CC=clang
-      export CXX=clang++
-
-      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-   fi
-}
+hostmakedepends+=" gcc"
 
 post_install() {
    vlicense LICENSE

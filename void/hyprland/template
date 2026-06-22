@@ -1,7 +1,7 @@
 # Template file for 'hyprland'
 pkgname=hyprland
 version=0.55.4
-revision=3
+revision=4
 build_style=cmake
 configure_args="-DNO_SYSTEMD=ON -DUSE_NATIVE_EMBED=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
 hostmakedepends="cmake pkg-config autoconf git cpio glslang jq make ninja lua55"
@@ -77,8 +77,6 @@ homepage="https://hyprland.org/"
 changelog="https://github.com/hyprwm/Hyprland/releases"
 distfiles="https://github.com/hyprwm/Hyprland/releases/download/v${version}/source-v${version}.tar.gz"
 checksum=10cdda47e6a42e603a646ffda89c9fca0628c3a8211e2fbbee02f6282effe30b
-
-
 hostmakedepends+=" gcc"
 makedepends+=" libgcc-devel fmt-devel"
 

@@ -1,7 +1,7 @@
 # Template for 'hyprwire'
 pkgname=hyprwire
 version=0.3.1
-revision=2
+revision=3
 build_style=cmake
 short_desc="IPC library for Hyprland"
 maintainer="Rain Xelelo <rxelelo@outlook.com>"
@@ -11,37 +11,8 @@ hostmakedepends="cmake ninja pkg-config"
 makedepends="hyprutils-devel pugixml-devel libffi-devel"
 distfiles="https://github.com/hyprwm/hyprwire/archive/refs/tags/v${version}.tar.gz"
 checksum=92a673d40ae6a7d66fbcd0a34ec071e026e17eaeeb0040c3375e4b2a80dba737
-build_options="clang gcc"
-build_options_default="clang"
-desc_option_clang="Use clang to build" 
-desc_option_gcc="Use gcc to build"
-shlib_proivdes="libhyprwire.so.3"
+hostmakedepends+=" gcc"
 
-if [ "$build_option_gcc" ]; then
-	hostmakedepends+=" gcc"
-fi
-
-if [ "$build_option_clang" ]; then
-    hostmakedepends+=" clang21"
-fi
-
-pre_build() {
-	find ${wrksrc}/src -name "*.cpp" -exec \
-		sed -i 's/\([a-zA-Z_.]*\)\.append_range(\(.*\));/{ auto _r = \2; \1.insert(\1.end(), _r.begin(), _r.end()); }/g' {} +
-}
-
-pre_configure() {
-   if [ "$build_option_clang" ]; then
-      export CC=clang
-      export CXX=clang++
-      export CXXFLAGS="${CXXFLAGS} -stdlib=libstdc++"
-      export LDFLAGS="${LDFLAGS} -stdlib=libstdc++"
-
-      configure_args+=" -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX \
-         -DCMAKE_CXX_STANDARD=23 \
-         -DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++ -DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++"
-   fi
-}
 post_install() {
 	vlicense LICENSE
 }
