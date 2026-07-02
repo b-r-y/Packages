@@ -1,0 +1,13 @@
+--- a/src/core/socket/SocketHelpers.cpp	2026-04-26 01:30:02.000000000 +0200
++++ b/src/core/socket/SocketHelpers.cpp	2026-07-02 22:34:52.429205641 +0200
+@@ -43,7 +43,8 @@
+         if (sizeWritten < 0)
+             return {.bad = true};
+
+-        message.data.append_range(std::span<uint8_t>(buffer, sizeWritten));
++        auto varint = std::span<uint8_t>(buffer, sizeWritten);
++        message.data.insert(message.data.end(), varint.begin(), varint.end());
+
+         // check for control
+         cmsghdr* recvdCmsg = CMSG_FIRSTHDR(&msg);
+

@@ -1,0 +1,12 @@
+--- a/src/core/message/messages/HandshakeBegin.cpp	2026-04-26 01:30:02.000000000 +0200
++++ b/src/core/message/messages/HandshakeBegin.cpp	2026-07-02 22:23:18.613560201 +0200
+@@ -62,7 +62,8 @@
+         HW_MESSAGE_MAGIC_TYPE_UINT,
+     };
+
+-    m_data.append_range(g_messageParser->encodeVarInt(versions.size()));
++    auto varint = g_messageParser->encodeVarInt(versions.size());
++    m_data.insert(m_data.end(), varint.begin(), varint.end());
+
+     const size_t HEAD_SIZE = m_data.size();
+
