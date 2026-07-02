@@ -1,0 +1,25 @@
+--- a/src/core/message/messages/BindProtocol.cpp	2026-07-02 17:52:12.316783498 +0200
++++ b/src/core/message/messages/BindProtocol.cpp	2026-07-02 17:52:23.643285233 +0200
+@@ -67,12 +67,17 @@
+
+     m_data.emplace_back(HW_MESSAGE_MAGIC_TYPE_VARCHAR);
+
+-    m_data.append_range(g_messageParser->encodeVarInt(protocol.length()));
+-    m_data.append_range(protocol);
++    auto varint = g_messageParser->encodeVarInt(protocol.length());
++    m_data.insert(m_data.end(), varint.begin(), varint.end());
+
+-    m_data.append_range(std::vector<uint8_t>{HW_MESSAGE_MAGIC_TYPE_UINT, 0, 0, 0, 0});
++    m_data.insert(m_data.end(), protocol.begin(), protocol.end());
++
++    m_data.insert(
++        m_data.end(),
++        {HW_MESSAGE_MAGIC_TYPE_UINT, 0, 0, 0, 0}
++    );
+
+     std::memcpy(&m_data[m_data.size() - 4], &version, sizeof(version));
+
+     m_data.emplace_back(HW_MESSAGE_MAGIC_END);
+-}
++}
+

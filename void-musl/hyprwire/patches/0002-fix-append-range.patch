@@ -1,0 +1,15 @@
+--- a/src/core/message/messages/FatalProtocolError.cpp	2026-04-26 01:30:02.000000000 +0200
++++ b/src/core/message/messages/FatalProtocolError.cpp	2026-07-02 22:15:30.838878701 +0200
+@@ -68,7 +68,9 @@
+     std::memcpy(&m_data[2], &objectId, sizeof(objectId));
+     std::memcpy(&m_data[7], &errorId, sizeof(errorId));
+
+-    m_data.append_range(g_messageParser->encodeVarInt(msg.size()));
+-    m_data.append_range(msg);
++    auto varint = g_messageParser->encodeVarInt(msg.size());
++    m_data.insert(m_data.end(), varint.begin(), varint.end());
++    m_data.insert(m_data.end(), msg.begin(), msg.end());
++
+     m_data.emplace_back(HW_MESSAGE_MAGIC_END);
+ }
+

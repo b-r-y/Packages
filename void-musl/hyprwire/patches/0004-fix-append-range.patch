@@ -1,0 +1,20 @@
+--- a/src/core/message/messages/HandshakeProtocols.cpp	2026-04-26 01:30:02.000000000 +0200
++++ a/src/core/message/messages/HandshakeProtocols.cpp	2026-07-02 22:28:30.066328884 +0200
+@@ -61,11 +61,13 @@
+         HW_MESSAGE_MAGIC_TYPE_VARCHAR,
+     };
+
+-    m_data.append_range(g_messageParser->encodeVarInt(protocols.size()));
++    auto varint = g_messageParser->encodeVarInt(protocols.size());
++    m_data.insert(m_data.end(), varint.begin(), varint.end());
+
+     for (const auto& p : protocols) {
+-        m_data.append_range(g_messageParser->encodeVarInt(p.size()));
+-        m_data.append_range(p);
++        auto varint = g_messageParser->encodeVarInt(p.size());
++        m_data.insert(m_data.end(), varint.begin(), varint.end());
++        m_data.insert(m_data.end(), p.begin(), p.end());
+     }
+
+     m_data.emplace_back(HW_MESSAGE_MAGIC_END);
+

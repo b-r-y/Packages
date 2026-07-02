@@ -1,0 +1,48 @@
+--- a/src/core/wireObject/IWireObject.cpp	2026-04-26 01:30:02.000000000 +0200
++++ a/src/core/wireObject/IWireObject.cpp	2026-07-02 22:43:17.394292031 +0200
+@@ -146,8 +146,10 @@
+             case HW_MESSAGE_MAGIC_TYPE_VARCHAR: {
+                 data.emplace_back(HW_MESSAGE_MAGIC_TYPE_VARCHAR);
+                 auto str = va_arg(va, const char*);
+-                data.append_range(g_messageParser->encodeVarInt(std::string_view(str).size()));
+-                data.append_range(std::string_view(str));
++                auto varint = g_messageParser->encodeVarInt(std::string_view(str).size());
++                data.insert(data.end(), varint.begin(), varint.end());
++                auto varint_str = std::string_view(str);
++                data.insert(data.end(), varint_str.begin(), varint_str.end());
+                 break;
+             }
+
+@@ -158,7 +160,8 @@
+
+                 auto arrayData = va_arg(va, void*);
+                 auto arrayLen  = va_arg(va, uint32_t);
+-                data.append_range(g_messageParser->encodeVarInt(arrayLen));
++                auto varint = g_messageParser->encodeVarInt(arrayLen);
++                data.insert(data.end(), varint.begin(), varint.end());
+
+                 switch (arrType) {
+                     case HW_MESSAGE_MAGIC_TYPE_UINT:
+@@ -181,8 +184,10 @@
+                     case HW_MESSAGE_MAGIC_TYPE_VARCHAR: {
+                         for (size_t i = 0; i < arrayLen; ++i) {
+                             const char* element = rc<const char**>(arrayData)[i];
+-                            data.append_range(g_messageParser->encodeVarInt(std::string_view(element).size()));
+-                            data.append_range(std::string_view(element));
++                            auto varint = g_messageParser->encodeVarInt(std::string_view(element).size());
++                            data.insert(data.end(), varint.begin(), varint.end());
++                            auto varint_str = std::string_view(element);
++                            data.insert(data.end(), varint_str.begin(), varint_str.end());
+                         }
+                         break;
+                     }
+@@ -264,7 +269,7 @@
+     if (!method.returnsType.empty())
+         params.emplace_back(HW_MESSAGE_MAGIC_TYPE_SEQ);
+
+-    params.append_range(method.params);
++    params.insert(params.end(), method.params.begin(), method.params.end());
+
+     if (method.since > m_version) {
+         const auto MSG = std::format("method {} since {} but has {}", id, method.since, m_version);
+
